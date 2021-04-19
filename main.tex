@@ -1,0 +1,450 @@
+% Deze template is gemaakt door Fons van der Plas (f.vanderplas@student.ru.nl) voor het publiek domein en mag gebruikt worden **zonder vermelding van zijn naam**.
+% This template was created by Fons van der Plas (f.vanderplas@student.ru.nl) for the public domain, and may be used **without attribution**.
+\documentclass{article}
+\usepackage[utf8]{inputenc}     % for éô
+\usepackage[english]{babel}     % for proper word breaking at line ends
+\usepackage[a4paper, left=1.5in, right=1.5in, top=1.5in, bottom=1.5in]{geometry}
+                                % for page size and margin settings
+\usepackage{graphicx}           % for ?
+\usepackage{amsmath,amssymb}    % for better equations
+\usepackage{amsthm}             % for better theorem styles
+\usepackage{mathtools}          % for greek math symbol formatting
+\usepackage{enumitem}           % for control of 'enumerate' numbering
+\usepackage{listings}           % for control of 'itemize' spacing
+\usepackage{todonotes}          % for clear TODO notes
+\usepackage{hyperref}           % page numbers and '\ref's become clickable
+\usepackage{todonotes}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SET TITLE PAGE VALUES HERE %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%             ||               %
+%             ||               %
+%             \/               %
+
+\def\thesistitle{Thesis Title}
+\def\thesissubtitle{Thesis Subtitle}
+\def\thesisauthorfirst{Gizem}
+\def\thesisauthorsecond{Aydin}
+\def\thesissupervisorfirst{Faegheh}
+\def\thesissupervisorsecond{Hasibi}
+\def\extthesissupervisorfirst{S. Amin}
+\def\extthesissupervisorsecond{Tabatabaei}
+\def\thesissecondreaderfirst{name}
+\def\thesissecondreadersecond{Surname}
+\def\thesisdate{date}
+
+
+%             /\               %
+%             ||               %
+%             ||               %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SET TITLE PAGE VALUES HERE %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% FOR PDF METADATA
+\title{\thesistitle}
+\author{\thesisauthorfirst\space\thesisauthorsecond}
+\date{\thesisdate}
+
+%% TODO PACKAGE
+\newcommand{\towrite}[1]{\todo[inline,color=yellow!10]{TO WRITE: #1}}
+
+%% THEOREM STYLES
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{corollary}{Corollary}[theorem]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+\theoremstyle{remark}
+\newtheorem*{remark}{Remark}
+
+
+%% MATH OPERATORS
+\DeclareMathOperator{\supersine}{supersin}
+\DeclareMathOperator{\supercosine}{supercos}
+
+%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\begin{titlepage}
+	\thispagestyle{empty}
+	\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
+	\center
+	\textsc{\Large Radboud University Nijmegen}\\[.7cm]
+	\includegraphics[width=25mm]{img/in_dei_nomine_feliciter.eps}\\[.5cm]
+	\textsc{Faculty of Science}\\[0.5cm]
+	
+	\HRule \\[0.4cm]
+	{ \huge \bfseries \thesistitle}\\[0.1cm]
+	\textsc{\thesissubtitle}\\
+	\HRule \\[.5cm]
+	\textsc{\large Thesis MSc Computing Science}\\[.5cm]
+	
+	\begin{minipage}{0.4\textwidth}
+	\begin{flushleft} \large
+	\emph{Author:}\\
+	\thesisauthorfirst\space \textsc{\thesisauthorsecond}
+	\end{flushleft}
+	\end{minipage}
+	~
+	\begin{minipage}{0.4\textwidth}
+	\begin{flushright} \large
+	\emph{Supervisor:} \\
+	\thesissupervisorfirst\space \textsc{\thesissupervisorsecond} \\[1em]
+	\emph{External Supervisor:} \\
+	\extthesissupervisorfirst\space \textsc{\extthesissupervisorsecond} \\[1em]
+	\emph{Second reader:} \\
+	\thesissecondreaderfirst\space \textsc{\thesissecondreadersecond}
+	\end{flushright}
+	\end{minipage}\\[4cm]
+	\vfill
+	{\large \thesisdate}\\
+	\clearpage
+\end{titlepage}
+
+\tableofcontents
+
+
+
+\newpage
+
+\begin{abstract}
+This is the abstract
+\end{abstract}
+\newpage
+\section{Introduction}
+\label{sec:intro}
+Automatic extraction of funding information from academic articles has been an interesting subject for researchers, and various approaches have been proposed for this purpose \cite{ElsPaper,AckExtract,GrantExtractor}. Annotating articles with their corresponding funding information adds significant value to the research community, such as enabling organizations to track the outcome of the research they funded \cite{ElsPaper} and aiding the compliance of open access rules \cite{GrantExtractor}. However, this task is far from trivial, and there is still room for improvement.
+
+Funding information extraction contains subtasks in itself. These can roughly be summarized as:
+\renewcommand{\labelenumi}{(\roman{enumi})}
+\begin{enumerate}
+     \vspace{-0.3cm}\item isolating the piece of text that contains the funding information from the articles,
+     \vspace{-0.6cm}\item extracting mentions of funding organizations and grant numbers from the selected text,
+     \vspace{-0.3cm}\item linking the funding organization mentions to the corresponding entities in a specific Knowledge Repository to determine which funder is being acknowledged,
+     \vspace{-0.3cm}\item linking grant numbers to the respective funder mention to decide which grant number belongs to which funder. 
+\end{enumerate}
+
+\vspace{-0.3cm}\noindent In this thesis, the aim is to develop a neural Entity Linker for funding domain, hence tackling subtasks (ii) and (iii).
+
+
+Entity Linking (EL) is the task of annotating text with corresponding entity identifiers from a Knowledge Repository (KR) \cite{balog}. EL entails Named Entity Recognition (NER) and Named Entity Disambiguation (NED), where the former corresponds to detecting mentions and their respective types from the text and the latter corresponds to linking the mentions to a KR \cite{balog}. 
+
+A large amount of literature addresses EL, NER and NED using neural approaches, which includes the state-of-the-art methods \cite{REL,LUKE,mulang} as well. However, the bigger part of this work focuses on performing these tasks in general-domain, often times considering Wikipedia pages as entities \cite{nlpnotes}. Hence, there is no guarantee that these approaches will perform well in funding domain.
+
+There are significant amount of differences between performing EL in general-domain and in funding domain. First of all, a different knowledge repository is needed as most of the smaller funders do not exist in general-purpose knowledge repositories.  Another challenge is the fact that some information that is deemed highly important in general-domain NED may not be as informative in this domain. For example, \cite{raiman} reported that NED would almost be solved if entity type information could be estimated better. However, in funding domain, some of the most ambiguous mentions are the ones referring to ministries, as a lot of countries may have a ministry with the same name. In these cases, the type of the mentions being, for example, governmental organizations would not provide any clue. 
+
+Funding domain introduces additional challenges for the NER task as well. For example, the mentions of organizations that are not funders should not be extracted. Another challenge is the limited amount of labelled data. In general-domain setting, Wikipedia could be exploited to extract millions of samples \cite{bunescu-pasca-2006-using}. Supervised neural architectures for NER require a large amount of training data to obtain high performance \cite{NERsurvey}.
+
+Considering the mentioned differences, this thesis aims to answer the following research question:
+
+\begin{quote}\emph{RQ: Is it possible to use neural approaches for Entity Linking in funding domain, where labelled data is limited and a domain-specific knowledge repository is used?}\end{quote}
+
+\textcolor{red}{Explain how the research question will be answered and that the data/resources from Elsevier will be used.}
+
+\textcolor{red}{Explain what each section entails.}
+\textcolor{red}{Add stuff from Radboud Writing Lab session}
+
+\newpage
+\section{Task Definition}
+\todo{Do I need to cite anything here?}
+In this thesis, the aim is to perform Entity Linking (EL) in funding domain. Typically, EL consists of two subtasks, Named Entity Recognition (NER) and Entity Disambiguation (ED).
+
+Given a piece of text $d=\{x_1,...,x_N\}$ consisting of $N$ tokens, the task of NER is to identify a set of spans $M = \{m_i \mid m_i = \{x_s,..,x_e\}, s \geq 1 \land s\geq e \land N \geq e\}$, where each span is a subset of consecutive tokens of $d$ and corresponds to an object, person or even a piece of information of interest. These spans are called a named entity, or a mention. Usually, detecting the type of the extracted mention is also part of the NER task. The available mention types differ among objectives of the systems. In this thesis, the aim is to extract funding organizations and grant numbers from academic articles, hence, each mention $m_i$ corresponds to one of these types. Formally, the first will be denoted as \textit{Organization} or \textit{ORG}, while the latter will be denoted as \textit{Grant} or \textit{GRT}. Hence, $type(m_i) \in \{ORG,GRT\}$. Throughout this research, it is assumed that the mentions are not nested and are not overlapping.
+
+Given the set of mentions $M$, the aim of ED is to link each mention to their corresponding entity $e_i \in \mathcal{E} $ in a knowledge repository. The idea behind this is the fact that many different names (mentions) may be used to refer to the same thing (entity). When a mention $m_i$ is referring to an entity $e_i$, this will be denoted as $link(m_i) = e_i $. A knowledge repository is a collection of entities, and may contain information on the entities and relations between them. The contents and specifications of the knowledge repository used is task-dependent. Another thing to note is that some mentions may not correspond to any entity in the target knowledge repository. These mentions are usually referred to as \textit{NIL Mentions}. To denote these cases, a NIL entity $\emptyset \in \mathcal{E}$ will be used. In this thesis, a knowledge repository of funding organizations is used, hence, only the mentions with type \textit{ORG} will be considered for ED.
+
+Sometimes, the set of entities $\mathcal{E}$ may be extremely large. In that case, a Candidate Selector (CS) may be used to limit the search space. The aim of the CS is to extract a set of candidate entities $C_i = \{e_1,...e_K\} \subset \mathcal{E} $ for a given mention $m_i$. Usually the size of $C_i$ is much smaller than that of $\mathcal{E}$. This enables using more complex algorithms for ED as it reduces the number of entities to consider.
+
+Lastly, the aim of this thesis, the task of EL is to extract a set of mention-entity pairs from an input text $d$. In this thesis, as only the $ORG$ mentions will be linked, the objective can be defined as exracting the set $T = E_{ORG} \cup M_{GRT}$ for each input $d$, where,
+\begin{equation}
+E_{ORG}=\{(m_i,e_i) \mid m_i \in M \land e_i \in \mathcal{E} \land link(m_i)=e_i \land type(m_i) = ORG\}
+\end{equation}
+and 
+\begin{equation}
+M_{GRT} = \{m_i \mid m_i \in M \land type(m_i) = GRT\}.
+\end{equation}
+
+\newpage
+\section{Related Work}
+There is a large amount of literature on Entity Linking and its subtasks, Named Entity Recognition and Named Entity Disambiguation. The bigger part of this literature focuses on performing these tasks in the general-domain setting, often times considering Wikipedia pages as entities \cite{nlpnotes}. While this line of research introduces the state-of-the-art approaches, there is no guarantee that these approaches will perform well in a domain-specific setting with a custom knowledge repository. Hence, domain-specific literature is also investigated to get insights on adapting general-purpose to a specific domain.
+
+Section \ref{FundingDataExtraction} reviews the literature on automatic funding information extraction from academic articles. In Section \ref{sota}, state-of-the-art general-purpose NER, NED and EL solutions are presented. Domain-specific neural NER, NED and EL approaches are demonstrated in Section \ref{domSpec}. Section \ref{entityRep} concentrates on entity representations in neural NED, mainly entity embeddings, and lastly, Section \ref{preLMDiffDomain} reviews the literature on using pretrained language models in domain-specific applications.
+\todo{Should I put citation to every sentence before "HERE" mark?}
+\subsection{Funding Information Extraction}
+\label{FundingDataExtraction}
+
+    One of the most notable work on automatically extracting funding information from text is FundingFinder \cite{ElsPaper}. FundingFinder is a two-step pipeline that utilizes NLP techniques. In the first step, the paragraphs that contain funding information are determined, and in the second step, NER is performed using an ensemble of different Sequential Learning approaches. The authors also created a publicly available benchmark dataset for this task.\todo{HERE} The approach used in this thesis builds upon this work, keeping the first step intact while improving the second step, and adding the NED capability. 
+    
+    Before FundingFinder, not much literature existed on extracting funding information from text automatically, and the existing work mostly utilized regular expressions \cite{ElsPaper}. Recently, there have been more approaches presented to tackle this problem. In 2020, Wu et al. proposed AckExtract  \cite{AckExtract}, which extracts funder organization mentions from the COVID-19 Open Research Dataset \cite{CORD}. For NER, they use a pretrained neural NER model from the package Stanza \cite{stanza}, which uses Contextual String Embeddings \cite{flairpaper}.\todo{HERE} However, their method does not include any NED, whereas in this thesis, one of the tasks is to link the funder mentions to their corresponding entities in the domain-specific Knowledge Repository. Another approach is proposed in 2021, GrantExtractor \cite{GrantExtractor}, which extracts funding information from articles in biomedical literature, in the form of grant numbers and their corresponding organizations. For extracting grant numbers, they train a BiLSTM-CRF \cite{BiLSTMCRF} architecture. Using a multi-class classifier, they determine which organization the extracted grant number belongs to. They do not use any neural approaches for extracting organization mentions.\todo{HERE} Also, the focus is on linking grant numbers to their respective organizations, while the focus of this thesis includes extracting all funding organizations that financially supported the corresponding research, even though no grant information is acknowledged.
+
+\subsection{Entity Linking and Subtasks}
+\label{sota}
+In this section, the current state-of-the-art methods for EL and its subtasks, NER and NED, are investigated.
+\todo{I checked NLP-Progress should I cite it?}
+\subsubsection{Named Entity Recognition}
+In the past couple of years, Deep Learning has been a popular choice to tackle the NER problem, and the corresponding research has improved the state-of-the-art results \cite{NERsurvey}. In 2018, Akbik et al. proposed Contextual String Embeddings \cite{flairpaper}, which represents words using a character-level neural language model, and is able to produce different word embeddings depending on the context. By utilizing a BiLSTM-CRF architecture that takes the concatenation of Contextual String Embeddings and pretrained GloVe embeddings \cite{glove} as input, they report state-of-the-art results in both German and English NER, in the CoNLL-2003 \cite{conll} setup. \todo{HERE}
+
+Some approaches for NER utilize external resources, such as a list of entity names, which may be called a dictionary or a gazetteer. This may boost the performance of the system, but may also hurt the generalization ability \cite{NERsurvey}. However, there have been various models presented \cite{NERgazetteer, NERDict} that incorporate this information, and performs comparable to \cite{flairpaper}. With this approach, both papers \cite{NERgazetteer, NERDict} aim to improve the performance on entities that do not appear in the training set or that are rare. 
+
+Recently, Yamada et al. (2020) proposed LUKE \cite{LUKE}, a contextualized representation for both words and entities, to be used in entity-related tasks. LUKE is based on the bidirectional transformer \cite{transformer}, however, it treats words and entities as independent tokens. For this purpose, the authors propose a modified attention mechanism as well as a new training methodology based on BERT's \cite{BERT} masked training. They pretrain LUKE using a large entity-annotated Wikipedia corpus. By using the proposed embeddings, they report the new state-of-the-art results for NER, improving upon \cite{flairpaper}. \todo{HERE}
+
+\subsubsection{Named Entity Disambiguation}
+
+In 2018, Raiman and Raiman proposed DeepType \cite{raiman}, a NED approach that is constrained by the predicted type information for a given entity. By using the type information, they also reduce the complexity of disambiguation from polynomial to linear. DeepType produced the state-of-the-art results in three NED datasets, by obtaining scores of 92.36\%, 94.88\% and 90.85\% on WikiDisamb30 \cite{wikidisamb}, CoNLL (YAGO) \cite{CoNLLYago} and TAC-KBP-2010\footnote{\url{https://tac.nist.gov/}} respectively. The authors also note that DeepType can reach 99.0\% and 98.6\% accuracy on CoNLL (YAGO) and TAC-KBP-2010, when the type information is provided by an Oracle. Based on that, they claim the NED problem can almost be solved if the type classifier is improved. \todo{HERE} However, in the case of funding domain, most of the ambiguities in mentions cannot be solved by using the type information. For example, the mention "Ministry of Health", can be resolved to different entities corresponding to ministries in different countries, however,  the types of these entities would be the same.
+
+The paper proposed by Mulang' et al. (2020) \cite{mulang} slightly advances the state-of-the-art NED results for CoNLL (YAGO) \cite{CoNLLYago} dataset by obtaining a score of 94.94\% . The authors introduce the idea of incorporating context derived from Knowledge Graphs (KG) to pretrained transformers with the aim of improving their performance for NED. They extract triplets from the KG, verbalize them into natural language form, and append them to the input sentence and mention before passing it through the transformer. When they replace the Wikipedia description used in the DCA-SL model \cite{dca} with the structured KG context they extracted, they obtain the above-mentioned state-of-the-art results. \todo{HERE}
+
+Another interesting approach is proposed by Wu et al. in 2020 \cite{scalablezeroshot}, which outperforms DeepType \cite{raiman} in TAC-KBP-2010 by obtaining a 94.5\% accuracy . Their method also achieves state-of-the-art results in the zero-shot Entity Linking dataset derived from WikilinksNED \cite{wikilinksned}. To perform NED, they only use textual information and architectures that utilize pretrained BERT \cite{BERT} transformers. They represent the mention using itself and its context, and the entity using its description. Using a bi-encoder \cite{polyencoders}, they encode the mention and entity representations in the same space, which they later use to extract candidates for a given mention using approximate nearest neighbor search. They make the final decision by passing representations of the candidate entities and mentions through a cross-encoder \cite{polyencoders}.  \todo{HERE}
+
+\subsubsection{Entity Linking}
+Kolitsas et al. (2018) \cite{kolitsas} proposed the first end-to-end neural EL system in 2018, and recorded state-of-the-art results in AIDA CoNLL dataset \cite{CoNLLYago}. By tackling NER and NED jointly, the authors aim to utilize the dependency between these two tasks. They suggest that this has several benefits, such as improved mention boundary recognition. Their method first extracts all possible mention spans from the input. Then, the model computes a score for each mention - candidate entity pair, using pretrained entity embeddings \cite{kolitsasEmbed}, context-aware mention representations, commonness and long range attention scores. The final output for the input text is based on these scores and global entity coherence. \todo{HERE}
+
+In 2020, van Hulst et al. proposed REL \cite{REL}, an EL toolkit that utilizes state-of-the-art NLP research, outperforming \cite{kolitsas} in terms of micro-F1 score in AIDA CoNLL dataset \cite{CoNLLYago}. REL tackles the EL problem in three steps: NER, candidate selection and NED. For NER, they utilize Flair, namely, the sequence labelling architecture and Contextual String Embeddings proposed by \cite{flairpaper}. For each mention, up to 4 candidates are selected using commonness, and up to 3 candidates are selected based on the similarity between the context of the mention and entity embeddings. Entity embeddings are provided by \cite{kolitsasEmbed}, the same ones used in \cite{kolitsas}. For NED, Ment-norm by Le and Titov \cite{mentnorm} is used. Apart from obtaining state-of-the-art results, REL also offers a modular architecture, allowing easy replacement of components and it does not require a GPU during inference time \cite{REL}. \todo{HERE}
+
+Broscheit (2020) \cite{bertEL} proposed an architecture that jointly does NER, candidate selection and NED using BERT \cite{BERT}. In this approach, the task of EL is framed as a per-token multi-class classification problem. The model utilizes a pretrained BERT model and an output classification layer on top of it. \todo{HERE} Even though this approach is a big simplification on the EL task, it performs only a few percents off compared to \cite{kolitsas}.  However, as each entity is cast as a class, the model cannot disambiguate unseen entities. In real-word, knowledge repositories keep growing, and hence it is important for the system to be extendable for entities that do not exist in the training set \cite{gupta}. Moreover, some training datasets may not cover the whole entity vocabulary, such as the one used in this thesis.
+
+\subsection{Domain-Specific Systems}
+\label{domSpec}
+In this section, the research that aims to tackle EL, NER and NED in a domain-specific setting with neural architectures will be reviewed.
+
+For NER, there is a great amount of research in general domain, however, more research on domain-specific solutions are expected to be able to support real-world applications \cite{quote1}. \cite{NERDict2} proposed AutoNER, a neural architecture that is designed for learning from data that is created by distant supervision, without any human effort. The authors state that the existing NER approaches rely on a large amount of annotated data, which may not be available for the domain-specific setting. That is why, they use domain-specific dictionaries to automatically generate labelled data with distant supervision. The proposed model, AutoNER, uses the novel "Tie or Break" tagging schema, that is based on predicting whether two adjacent tokens belong to the same mention or not. In the paper, the authors reason that this architecture is suitable to use noisy labels generated by distant supervision. They show the effectiveness of their work in multiple datasets, two of them being the BC5CDR \cite{bc5cdr} and NCBI-Disease \cite{ncbi} datasets from the biomedical domain, in which AutoNER achieves 84.8\% and 75.52\% F1-score respectively. \todo{HERE} Another domain-specific NER approach that utilizes a dictionary is proposed by \cite{MedDict}, which tackles the Clinical NER problem in Chinese text. They show the effect of incorporating dictionary knowledge in the BiLSTM-CRF \cite{BiLSTMCRF} architecture on rare and unseen entities experimentally. Also, they suggest five different methods of using dictionaries in this context and compare the results. \todo{HERE}
+
+There also exist research on tackling the domain-specific NED problem with neural architectures. In 2019, Mondal et al. proposed a system that is based on string similarity to perform NED on disease names  \cite{MedicalTriplet}. The paper utilizes a two-step solution. First, for each mention, they extract a set of candidate entities based on Jaccard overlap and the cosine similarity between the entity label and the mention. They use the vector representations, which they obtain using word embeddings, to calculate the cosine similarity. For multi-word strings, they sum the embeddings for each word. Then, they rank the candidate entities with a Triplet Network \cite{tripletNetwork}, that learns to reduce the distance of the mention with the positive candidate, while increasing the distance with the negative candidate. As an input to this network, word embeddings is used again to represent the mention and the candidate entity's label. With this approach, they obtain 90\% accuracy on the NCBI-Disease \cite{ncbi} dataset, outperforming previous approaches. \todo{HERE} Different from \cite{MedicalTriplet}, Schumacher et al. (2020) \cite{ClinicalConcept} represents multi-word strings by two different methodologies, maxpooling over the word embeddings and running self-attention. They report better results with the latter for the NED task. \todo{HERE} Zhu et al. (2020) introduced LATTE \cite{latte}, another architecture for NED in medical domain. The authors emphasize the importance of fine-grained types in their setting, and as this information is not available, they model the fine-grained types as latent variables. For NED, in addition to the latent fine-grained types, they use the similarity between the entity's label, and the mention and its context. To train their model, they use multi-task learning for both type classification and NED. LATTE achieves a Mean Average Precision of 92.81\% in the MedMentions dataset \cite{medmentions}. \todo{HERE}
+
+Some proposed methodologies tackle the EL problem as a whole in a domain-specific setting using neural architectures. For biomedical domain, \cite{MedFeedback} proposed a joint neural architecture for NER and NED tasks for performing EL. Their architecture utilizes explicit feedback between the two tasks in a multi-task learning setting. With this architecture, they obtain F1 scores of 87.43\% and 88.23\% in NER and NED tasks of the NCBI-Disease \cite{ncbi} dataset respectively, and 87.62\% and 89.17\% in BC5CDR \cite{bc5cdr} dataset. \todo{HERE} With these numbers, they outperform AutoNER \cite{NERDict2} in NER setting for both datasets, and perform comparable to \cite{MedicalTriplet} in NCBI-Disease dataset for NED.
+
+Biomedical domain is not the only one in which neural approaches are used for NER, NED and EL. In 2019, Espejo-Garcia et al. \cite{agricultural} proposed a solution to extract named entities that refer to the important parts of phytosanitary regulations, which is related to the agricultural domain. The authors experimented with eight different state-of-the-art neural architectures. For their setting, the best performing architecture was a bidirectional LSTM \cite{bilstm} that utilized a Softmax layer for inference and got the concatenation of pretrained Word2Vec \cite{w2v} embeddings with character based word representations as input. With this architecture, they obtained an F1 Score of 88.3\%. \todo{HERE} Apart from agricultural domain, Yang et al. (2020) \cite{cosmetic} proposed Headword Oriented Entity Linking, an EL setting where the mention scopes do not need to be identified, to extract cosmetic products from blogs and to disambiguate them to a domain-specific knowledge repository. First, using word segmentation techniques, they identify the headwords of the mentions. Then, they apply classification on the mentions to decide whether the mention can be linked to a product that is in the knowledge repository. Lastly, they use a modified version of the architecture proposed by \cite{gupta} for NED. \todo{HERE} Another interesting study is by Kurz et al. (2020) \cite{TechTickets}, where they experiment with different BERT-based \cite{BERT} architectures to disambiguate mentions of machine parts and errors belonging to German technical service tickets.
+
+\subsection{Entity Representation}
+\label{entityRep}
+In neural NED, entity representation plays an important role. Some research frames the problem as multi-class classification and represent entities as different classes \cite{bertEL,MedDiffArc,MedFeedback}, while other research tends to use architectures that takes properties of entities as input and learns a representation internally during training for NED \cite{scalablezeroshot}, implicitly or explicitly. Another line of research utilizes entity embeddings \cite{REL,kolitsas,dca,MedicalTriplet}. In this section, the literature on entity embeddings will be reviewed.
+
+There is a large body of literature on embedding entities and relations found in knowledge repositories. One of the most notable work is TransE \cite{TransE}, introduced in 2013. TransE generates embeddings for each entity and relation in the input knowledge repository. The idea behind TransE is to model relations as translations in the embedding space. For a given triplet $(h,l,t)$ in the knowledge repository where $h$, $l$ and $t$ denote head entity, relation and tail entity respectively; TransE aims to make the embedding of $t$ as close as possible to the sum of the embeddings of $h$ and $l$, using an energy-based model.\todo{HERE} Later on, there has been models that improved upon TransE such as TransH, TransR, CTransR and TransD, each improving upon the previously proposed one respectively  \cite{TransEimproved}. Another interesting work that generates entity embeddings utilizing the triplets in knowledge repositories is RDF2Vec \cite{RDF2Vec}. RDF2Vec extracts graph sub-structures, and treats them as sentences to train a Word2Vec \cite{w2v} model. 
+ 
+In 2017, Gupta et al. proposed a neural architecture that can generate entity embeddings that jointly encodes the information on the entity's description, the context of its mentions and its type. The architecture consists of three models that encode the different information. The parameters of the models and the embeddings are jointly learned based on the sum of four different losses that ensure the entity embeddings and the encoded information is similar. The summation guarantees that entity embeddings can be generated even though some information is missing, such as the description \cite{gupta}. They also proposed an NED model based on these embeddings. \todo{HERE} As mentioned in Section \ref{domSpec}, a modification of this architecture is used to create entity embeddings in \cite{cosmetic}. Another interesting neural approach for generating entity embeddings was proposed by Ganea and Hofmann in 2017 \cite{kolitsasEmbed}, and, their pretrained entity embeddings have been used by research that reported state-of-the-art results in EL \cite{REL, kolitsas}. \cite{kolitsasEmbed} embeds words end entities in the same space by extending a pretrained Word2Vec model \cite{w2v} to cover entities as well. They generate the entity embeddings such that they are close to the vectors of the words that occur in the corresponding entity descriptions and in the mention contexts that belong to the entity. \todo{HERE} 
+
+Gillick et al. (2019) \cite{googleintern} proposed a dual encoder architecture for NED, which also learns entity embeddings. The model has one encoder to encode the mention and its context, another encoder to encode the entity using its description and categories. Then, the model is trained to maximize the cosine similarity between the encoded representations of the correct mention - entity pairs. After training, the entity embeddings are precomputed using the entity encoder and stored for inference. \todo{HERE}
+
+Another successful method to get entity embeddings is Wikipedia2Vec \cite{wikipedia2vec2}. They also have pretrained embeddings available for use. Wikipedia2Vec encodes words and entities in the same space and utilizes Word2Vec \cite{w2v}. To train Wikipedia2Vec, they use three models. Word-based skip gram model puts the embeddings of words that occur in similar context close, anchor context model puts the embeddings of entities close to embeddings of words that occur near the anchor texts of the entity, and lastly, link graph model puts the entity embeddings close based on Wikipedia's hyperlink graph. \todo{HERE}
+
+
+\subsection{Using Pretrained Language Models in Domain-Specific Applications}
+\label{preLMDiffDomain}
+BERT \cite{BERT}, and other pretrained language models have been used extensively in various NLP applications and have obtained state-of-the-art results in benchmark tasks \cite{pretrainedLM}. However, for some domains, they may be too generic and may not be able to cover specific needs \cite{quote2}. Hence, it may be worthwhile to adapt the pretrained language model that will be used to the specific domain. Gururangan et al. (2020) \cite{DontStop} shows that a second-round of pretraining of a pretrained language model improves the performance in both low and high resource settings, using different domains and tasks. Also, Fraser et al. (2019) \cite{quote3}, reports that language models which are pretrained with domain-specific text perform better on the task of NER in biomedical domain. However, it should be noted that training a neural language model from scratch for a specific domain can take weeks \cite{tritrain}. There is emerging research on cheap domain adaptation of pretrained language models. Tai et al. (2020) proposed exBERT \cite{exBERT}, a low-cost method to add new domain-related words to the vocabulary of BERT \cite{BERT} while not changing its weights. In addition, Poerner et al. (2020) \cite{word2vectoBERT} introduced a CPU-only domain adaptation method, where a Word2Vec \cite{w2v} model is trained on the domain-specific data, and the embedding vectors of the pretrained language model is aligned based on that.
+
+\newpage
+\section{Experimental Setup}
+To tackle the Entity Linking problem in funding domain, different experiments were defined. First, a pretrained BERT \cite{BERT} model was further pretrained using the relevant sentences. After that, separate Named Entity Recognition and Named Entity Disambiguation components were developed, and the possible entity representations were investigated. Lastly, the end-to-end performance of the best performing components were measured, and is compared with a single neural end-to-end architecture. The following sections present the data used and the experiments conducted.
+
+\subsection{Data}
+
+The dataset for funding data extraction and the knowledge repository for NED used in this research is provided by Elsevier B.V.\textcolor{red}{\footnote{??}}. The dataset consists of a set of labelled articles annotated by humans. To create this dataset, each article is annotated by three people. First, two annotators extracted the funding information from the articles independently. Then, a third annotator harmonized the decisions of the previous two annotators, resolving the conflicts if necessary. 
+
+For developing models and evaluating various approaches, the dataset is divided into five subsets: $Training$, $Validation^{1}$, $Validation^{2}$, $Test^{1}$ and $Test^{2}$. The $Training$ split is used to train the models. $Validation^{1}$ split is used to monitor the progress of training, while $Validation^{2}$ split is used to select the best approach for each task. $Test^{1}$ is used to evaluate the performance of each selected component and $Test^{2}$ is used to evaluate only the best end-to-end Entity Linking solution. The reason why there is such distinction in the testing sets is because $Test^{2}$ is the official evaluation split for funding data extraction pipeline at Elsevier, and hence is used very carefully. Another important point to note is that there may be a difference in data distributions between Test$^{1}$ and the other splits, as the former has been annotated $2$ years after the creation of the rest of the dataset.
+
+The second column of Table \ref{tab:datasets} shows the number of articles contained in each split. 
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ccccccc}
+    Dataset & \#Articles & \#Articles & \#Sentences &\#Org.& \#Grt.& \#Org. \\
+    Split & & Min.1 Sent.& &Mentions&Mentions&Links \\
+    \hline
+    Training  & 37,484 &22,720&26,132& 67,671 &45,263 &?\\
+    Validation$^{1}$ & 1,000&1,000&1,284&4,333&2,770&?\\
+    Validation$^{2}$ & 4,000&4,000&5,012&16,355 & 10,112&?\\
+    Test$^{1}$ & 5,921 &4,640 & 5,500 & 13,383 & 10,420 &? \\
+    Test$^{2}$ & 19,920 & 13,851 & 15,590 &37,495&25,349& ?\\
+    \end{tabular}
+    \caption{Dataset splits and statistics. For each split; number of articles, number of articles with at least one funding sentence, number of sentences, number of mentions and links are shown.}
+    \label{tab:datasets}
+\end{table}
+
+\textcolor{red}{As a preprocessing step, the methodology of \cite{ElsPaper} is used to identify the sentences containing funding information}. The third column of Table \ref{tab:datasets} shows the number of sentences extracted from each dataset split, and the second column shows the number of articles with at least one positive sentence. Furthormore, the number of organization and grant mentions on each split can be found in the fourth and fifth columns respectively. The last column shows the number of organization mentions that are linked to their corresponding entities in the knowledge repository.
+\subsubsection{Pretraining BERT}
+\label{sec:datapretrain}
+Following previous research (see Section \ref{preLMDiffDomain}), a pretrained BERT model \cite{BERT} is pretrained further for domain adaptation with Masked Language Modeling (MLM) \textcolor{red}{cite},using the sentences that are identified to be containing funding information. In this stage, apart from the articles in the $Training$ split, an additional 22,115 articles are used, increasing the number of training sentences to 40,088. This was made possible by the fact that MLM does not need labeled data. In fact, it is possible to utilize even more articles, however, this is left to future work due to time constraints and computational requirements.   
+
+\subsubsection{Knowledge Repository}
+\subsection{Evaluation}
+As this research contains training models for various tasks, different evaluation metrics are used. To pretrain BERT for the problem domain, an MLM objective is used. That is, for each sentence, some words were masked randomly and the model was taught to predict the masked word using the context around it \cite{BERT}. To monitor the quality of this training, Perplexity is used. This metric corresponds to the inverse probability of the dataset based on the model \cite{perplexity}, and it it is the most popular metric to evaluate language models \cite{perplexity}. 
+
+To evaluate the Named Entity Recognition task, precision recall and F1 scores are used for each entity type, $Organization$ and $Grant$. These metrics are defined in terms of True Positives (TP), False Positives (FP) and False Negatives (FN). Precision is defined as the fraction of TPs among all mentions extracted by the system, and recall is defined as the fraction TPs among all ground truth mentions. F1 score is the harmonic mean of precision and recall metrics. A mention is considered to be a TP if and only if both the extracted span and type information is correct. A FP corresponds to a mention that is extracted by the system wrongly, and a FN corresponds to a mention that is not extracted by the system while being present in the ground truth. This scheme is chosen as it is inline with evaluation of the CoNLL-2003 NER task \cite{conll}.
+
+
+\subsection{Domain-Adaptation of BERT}
+\label{sec:exSetPretrain}
+Previous work suggests that pretraining a BERT model with in-domain data improves the overall performance of the model for the task at hand \textcolor{red}{\cite{}}. For this purpose, instead of using a BERT model that is trained on a generic corpus, a more domain-relevant BERT, denoted by BERT$_{SC}$, is trained. The choice of terminology is attributed to the fact that the training data consists of a subset of articles that can be found in Scopus\textcolor{red}{\footnote{}}.
+
+To pretrain BERT$_{SC}$, Task-Adaptive Pretraining (TAPT) schema proposed by \cite{DontStop} is used. The idea behind TAPT is to pretrain a BERT model, which was pretrained on a generic dataset, further using unlabelled data from the specified task with MLM objective. The authors compare this approach with Domain-Adaptive Pretraining (DAPT), which they define as pretraining a BERT model from scratch using documents from a specific domain. DAPT is much more expensive in terms of both data and computational power compared to TAPT, and yet the authors show that TAPT performs comparable to DAPT. Although there are other works on adapting BERT to a specific domain in an inexpensive way \textcolor{red}{\cite{}}, TAPT was chosen due to its easy-to-use, open-source implementation \textcolor{red}{\footnote{}}.
+
+The weights of BERT$_{SC}$ were first initialized from "bert-base-cased" \textcolor{red}{\footnote{}}, and then using a MLM prediction head \textcolor{red}{\cite{}}, the whole model was fine-tuned end-to-end with the extended $Training$ split (see Section \ref{sec:datapretrain}), using the hyperparameter settings recommended by \cite{DontStop}. On top of that, at the end of each epoch, the resulting model was saved, and the model which had the lowest perplexity score on $Validation^{1}$ split was chosen to be BERT$_{SC}$ at the end. To reduce the runtime, instead of pretraining for 100 epochs as suggested, training was stopped when no improvement in $Validation^{1}$ was made for 4 consequtive epochs. The choice of a case-preserving model is due to the fact that case information can provide important information to the NER task, for example, it is common in English to capitalize organization names.
+
+\subsection{Named Entity Recognition}
+
+To extract mentions of funding organizations and grant numbers from sentences, a Named Entity Recognition system is developed. Section \ref{sec:NERpre} introduces the methodology to preprocess the data to convert it to a format suitable for the NER task, and Section \ref{sec:NERmodels} explains the models that were experimented with.
+
+\subsubsection{Preprocessing}
+\label{sec:NERpre}
+ The NER problem is cast as a token classification task using the IOB tagging schema. In this schema, the initial tokens of the mentions are tagged with a "B" ("Beginning") and the remainder tokens are tagged with an "I" ("Inside"). The tokens that are not a part of any mention are tagged with "O" ("Outside"). In NER, there may be different types of mentions. In that case, the type information is appended after the "B" and "I" tags. Since there are two types, \textit{Organization} and \textit{Grant}, a total of $5$ tags are used: $\{ \text{B-ORG}, \text{I-ORG}, \text{B-GRT}, \text{I-GRT}, \text{O} \}$.
+
+In the dataset used for this task, the annotations are not done in terms of tokens, but in terms of character spans of the input text. That is, each gold mention is provided using their character offsets with respect to the article text. Hence, first the input text is tokenized and the labels are assigned to tokens based on some predefined rules to tackle some edge cases that mostly correspond to annotation errors. These rules are extracted based on empirical results to maximize the correctness of the annotations. The experiments were done on a portion of the training set, and all the edge cases found were present for less than $0.5\%$ of the investigated dataset. In Appendix \ref{app:NERPrepro} you may find the details of the labelling step.
+
+\subsubsection{Approach}
+\label{sec:NERmodels}
+
+For the NER component, several models were implemented and tested. These models can be separated as Flair-based \cite{flairpaper} and  BERT-based \cite{BERT} models.The choice of experimenting with Flair was due to its success in NER task. Moreover, Flair is used by REL \cite{REL}, which achieved state-of-the-art results on Entity Linking,  and AckExtract \cite{AckExtract}, a system for extracting funder organization mentions. Contextual String Embeddings, the embeddings that is the core of Flair, consist of concatenation of vectors from a Left-to-Right and a Right-to-Left language model. However, \cite{BERT} reports that BERT is inherently more powerful than such language models as it is using MLM objective, that enables it to train a single representation for which both right and left contexts are used. Because of this claim and the recent popularity of BERT models, it is decided to experiment with BERT-based models as well.
+
+Explain Flair-based model
+
+We tried both BERT$_{SC}$ and "bert-base-cased".  Lastly, as the recent research showed the importance of domain adaptation \textcolor{red}{\cite{}} BERT$_{SC}$ is also used. 
+
+
+
+
+For the BERT-based NER models, namely the ones utilizing BERT-base-cased and BERT$_{SC}$, the architecture used consists of a BERT model and a linear classification layer on top of it. These models are fine-tuned end-to-end with different number of epoch and different learning rate schedulers. However, for the hyperparameters, mainly the advice given in \cite{BERT} is followed. The library transformers \textcolor{red}{\cite{}} is used for implementation. Another thing to note that is, some of the sentences extracted were too long to feed into the BERT model.  These sentences were split into smaller chunks as a preprocessing step, and the predictions were merged together again as a postprocessing step. These sentences were rare and covered only an  \textcolor{red}{\cite{}} \% of the $Training$ dataset. All the experiments were seeded for reproducibility.
+
+For the NER model using Contextual String Embeddings, a BiLSTM layer and a CRF layer were appended on top of the embeddings. During training, only these two layers were trained and the embeddings were frozen. This setting is inline with the one described in \cite{flairpaper}. This was implemented using the Flair library  \textcolor{red}{\cite{}}.
+
+\subsection{Hardware}
+\section{Results}
+\subsection{BERT_{SC}}
+%explain how it was trained
+%put a figure of train monitor perplexity
+%Tell how it was stopped
+\subsection{Named Entity Recognition}
+
+To compare the developed model, a Stanford Named Entity Recognizer \cite{stanfordNER} trained on a similar training set is used as a baseline.
+
+
+\section{Discussion}
+Put Limitations here.
+\subsection{BERT$_{SC}$}
+%Put the perplexity results
+%Compare these with BERT paper and dontstop paper
+%Say that performance may further be improved if more data is used to pretrain BERT_SC
+\subsection{BERT or Flair for NER}
+%Talk a bit about precision/recall tradeoff of the results
+%Talk about pipeline doing better in the new dataset
+
+\section{Conclusion}
+Put Future Work somewhere.
+
+
+%\section{Complex stuff}
+%\subsection{Domains}
+%Let's start with the following definition:
+%\begin{definition}\label{def:domain}
+%A set $U \subseteq \mathbb{C}$ is a \emph{domain} if:
+%\begin{itemize}
+%    \item $U$ is open in $\mathbb{C}$, and
+%    \item $U$ is connected.
+%\end{itemize}
+%\end{definition}
+%
+%
+%\subsection{Yumyumyumyum}
+%\towrite{an introduction and some examples}
+%
+%\begin{theorem}[]
+%Suppose $n \in \mathbb{Z}$, then the following are equivalent:
+%\begin{enumerate}[label=\roman*.]
+%    \item $n > 5$.
+%    \item $5 > 5$.\todo{This doesn't seem right...}
+%    \item For each $n \in n$, we have:
+%    \begin{align}\label{eq:truth}
+%        n > n+1 > n+1^2 > \dots > n+7.
+%    \end{align}
+%    where $7$ is an arbitrary element of
+%    \begin{align*}
+%        \oint_{a}^{b} \supersine \alpha + i \supercosine \beta  %db(a).
+%    \end{align*}
+%\end{enumerate}
+%\end{theorem}
+%
+%\begin{remark}
+%Interesting!
+%\end{remark}
+%\begin{proof}
+%See \cite{Rynne2008LinearAnalysis}.
+%\end{proof}
+%
+%\begin{figure}[h]
+%    \centering
+%    \includegraphics[width=.3\textwidth]{img/in_dei_nomine_felici%ter.eps}
+%    \caption{Motivational illustration. Similar to %\cite{Oort1958,Reed1960}.}
+%    \label{fig:logo}
+%\end{figure}
+%
+%\begin{corollary}
+%Suppose $U \subseteq \mathbb{C}$ is a domain (see Definition %\ref{def:domain}), and $f: \overline{U} \rightarrow \mathbb{C}$ %is continuous on $\overline{U}$ and holomorphic on $U$. If $z %\mapsto |f(z)|$ is constant on $\partial U$, then $f$ has a zero %in $U$.
+%\end{corollary}
+%\begin{proof}
+%If not, consider $\frac{1}{f}$.
+%\end{proof}
+%The proof of this theorem is illustrated in Figure %\ref{fig:logo}.
+%
+%\begin{figure}
+%    \centering
+%    \includegraphics[width=.7\textwidth]{img/cat.jpg}
+%    \caption{A cute dog.}
+%    \label{fig:my_label}
+%\end{figure}
+%
+%\newpage
+
+% You can choose a citation style, 'plain' is the default
+% See:
+% https://www.overleaf.com/learn/latex/Bibtex_bibliography_styles
+\newpage
+\bibliographystyle{plain}
+\bibliography{references.bib}
+
+
+
+% Have fun!
+% -fons
+
+% http://www2.washjeff.edu/users/rhigginbottom/latex/resources/symbols.pdf
+
+\appendix
+\newpage
+\section{NER Data Preprocessing}
+\label{app:NERPrepro}
+ Below, you may find the steps to assign labels to tokens using the gold annotations in sequential order.
+\begin{enumerate}
+    \item Label tokens of ORG mentions. Sometimes, annotators tend to extract mentions not as a continuous span, but rather a list of individual words. If there more than two characters in-between, take the first continuous set of words. The decision of not taking the mention from the first annotated word until the last is based on the cases where there are too many characters or grant mentions in-between these words. It was observed that the first span mostly contained the important words to be able to identify the organization. Example annotations where underlined text corresponds to a single mention based on the gold annotation:
+    \begin{quote}
+        (a) \underline{National Instituteo f Child Healtha ndH umanD evelopmen} \underline{t} \\
+        (b) the \underline{Technological Innovation and Demonstration of Social Undertakings} \underline{Project fund} ( HS2014003 ) of \underline{Nantong, Jiangsu}, China;
+    \end{quote}
+
+    \item Remove duplicate ORG mentions based on their position on text. If there are two mentions with same text in different parts of the input, both are kept.
+    \item Remove ORG mentions that are too long. Very rarely, the annotators extracted too large of a span as a mention, sometimes even the whole article. ORG mentions longer than $200$ characters are discarded.
+    \item If there are overlapping ORG mentions, keep only the one with the largest span. Example overlapping gold annotations:
+    \begin{quote}
+        (a) "National grant no. Science NSC Council" \\
+        (b) "NSC"
+    \end{quote}
+    \item Label tokens of GRT mentions. Follow the same rule as the first step for mentions that are not continuous spans.
+    \item Remove duplicate GRT mentions similar to the second step.
+    \item Discard the grant mentions that are longer than $100$ characters. 
+    \item Resolve overlapping GRT mentions similar to the fourth step.
+    \item Resolve overlapping ORG and GRT mentions. Keep the label of the ORG mention, if there are tokens left on the right-hand-size, label them as GRT. 
+    \begin{quote}
+        Text: "supported by the European Community, FP6 036097-2" \\
+        (a) ORG Mention: "European Community, FP6" \\
+        (b) GRT Mention: "FP6 036097-2" \\
+        (c) Span that is labelled as ORG: "European Community, FP6" \\
+        (d) Span that is labelled as GRT: "036097-2"
+    \end{quote}
+\end{enumerate}
+    As the candidate models for NER were BERT-based \cite{BERT} and Flair-based \cite{flairpaper} models, the tokenizers these models use were tried for the tokenization of the input text before assigning the NER labels. After empirical analysis, it was decided the use the tokenizer of the "bert-base-cased" model \cite{BERT}, as it was splitting the text to smaller pieces, which was crucial to minimize labelling errors. One drawback of this tokenizer is that it being a word-piece tokenizer. Hence, it also splits some words into smaller pieces based on the vocabulary of the model. As a post-processing step, these wordpieces are merged back together.
+\end{document}
