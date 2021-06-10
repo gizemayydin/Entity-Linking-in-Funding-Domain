@@ -117,82 +117,69 @@
 \begin{abstract}
     \textcolor{red}{ToDo after all document is finished:}
     \begin{itemize}
-        \item \textcolor{red}{Fix repeating citations}
         \item \textcolor{red}{Check if the reference formats are correct, maybe remove urls}
-        \item \textcolor{red}{Fix acronyms introduction and usage}
         \item \textcolor{red}{Find a title}
         \item \textcolor{red}{Add name of second reader}
-        \item \textcolor{red}{Remove the bullets of the analysis section and wrap-up}
         
     \end{itemize}
 \end{abstract}
 \newpage
 \chapter{Introduction}
 \label{sec:intro}
-Automatic extraction of funding information from academic articles has been an interesting subject for researchers, and various approaches have been proposed for this purpose \cite{ElsPaper,AckExtract,GrantExtractor}. Annotating articles with their corresponding funding information adds significant value to the research community, such as enabling organizations to track the outcome of the research they funded \cite{ElsPaper} and aiding the compliance of open access rules \cite{GrantExtractor}. However, this task is far from trivial, and there is still room for improvement.
 
-Funding information extraction contains subtasks in itself. These can roughly be summarized as:
+
+
+
+
+\section{Background and Motivation}
+Automatic extraction of funding information from academic articles has been an interesting subject for researchers, and various approaches have been proposed for this purpose \cite{ElsPaper,AckExtract,GrantExtractor}. Annotating articles with their corresponding funding information adds significant value to the research community. Furthermore, it is not possible to do this annotation manually due to the immense amount of literature, making automatization a must.
+
+A lot of research is made possible by the funding that was provided. Many researchers spend a significant amount of time to find the financial resources they need, and many organizations spend large amounts of capital to sponsor research. This puts funding in an important position for research output, researchers and organizations. As a consequence, displaying funding information of academic articles brings certain benefits. For example, it enables organizations to track the outcome of the research they funded \cite{ElsPaper}. Successful research output on one topic may persuade an organization to invest more in that topic, expanding the resources available to the researches interested in that area. Or, if a researcher is looking for funding for a certain research question, they can search for organizations that funded a similar topic in the past. Lastly, some funding organizations, such as NWO\footnote{\url{https://www.nwo.nl/en/open-access-publishing}} and National Institutes of Health\footnote{\url{https://en.wikipedia.org/wiki/NIH_Public_Access_Policy}},  may require the researchers to make the resulting publications publicly available. Displaying funding information may aid the compliance of such open access rules \cite{GrantExtractor}. 
+
+Funding information extraction contains subtasks in itself. These can roughly be summarized as:\vspace{0.2cm}
 \renewcommand{\labelenumi}{(\roman{enumi})}
 \begin{enumerate}
      \vspace{-0.3cm}\item isolating the piece of text that contains the funding information from the articles,
-     \vspace{-0.6cm}\item extracting mentions of funding organizations and grant numbers from the selected text,
-     \vspace{-0.3cm}\item linking the funding organization mentions to the corresponding entities in a specific Knowledge Repository to determine which funder is being acknowledged,
-     \vspace{-0.3cm}\item linking grant numbers to the respective funder mention to decide which grant number belongs to which funder. 
+     \vspace{-0.6cm}\item extracting the strings that refer to funding organizations and grant numbers from the selected text,
+     \vspace{-0.3cm}\item for the strings of funding organizations, determining which real-world organization is being referred to,
+     \vspace{-0.3cm}\item for the strings of grant numbers, determining which funding organization string they are related to.
 \end{enumerate}
 
-\vspace{-0.3cm}\noindent In this thesis, the aim is to develop a neural Entity Linker for funding domain, hence tackling subtasks (ii) and (iii).
+\vspace{-0.3cm}\noindent In this thesis, the aim is to develop a neural Entity Linker for funding domain, hence tackling subtasks (ii) and (iii). 
 
+Entity Linking (EL) is the task of annotating text with corresponding entity identifiers from a Knowledge Repository (KR) \cite{balog}. A KR is a collection of entities representing uniquely identifiable artefacts in real world. An entity could be many things, such as a person, a place or even an artwork. EL entails two subtasks: Named Entity Recognition (NER) and Named Entity Disambiguation (ED). NER corresponds to detecting mentions and their respective types from the text, and ED corresponds to finding which entity in the KR a mention is referring to \cite{balog}. In this definition, mentions are strings in text indicating entities.
 
-Entity Linking (EL) is the task of annotating text with corresponding entity identifiers from a Knowledge Repository (KR) \cite{balog}. EL entails Named Entity Recognition (NER) and Named Entity Disambiguation (ED), where the former corresponds to detecting mentions and their respective types from the text and the latter corresponds to linking the mentions to a KR \cite{balog}. 
+A large amount of literature addresses EL, NER and ED using neural approaches, which includes the state-of-the-art methods \cite{REL,LUKE,mulang} as well. These methods show significant improvement over rule-based systems or systems utilizing classical Machine Learning algorithms, such as DBPedia Spotlight \cite{dbpediaspotlight}. The bigger part of the work on neural NER, ED and EL focuses on performing these tasks in general-domain, often times considering Wikipedia pages as entities \cite{nlpnotes}. There is no guarantee that these approaches will perform well in funding domain as there are significant differences. For example, in order to disambiguate funding organizations, a different KR is needed due to most of the smaller funders not being present in general-purpose KRs. Moreover, mentions of organizations that are not funders should not be extracted. In addition, grant numbers are mostly a combination of digits and letters, different from mentions of more popular entities such as persons or places. Another challenge is the limited amount of labelled data. In general-domain setting, Wikipedia could be exploited to extract millions of samples \cite{bunescu-pasca-2006-using}. Supervised neural architectures for NER require a large amount of training data to obtain high performance \cite{NERsurvey}. 
 
-A large amount of literature addresses EL, NER and ED using neural approaches, which includes the state-of-the-art methods \cite{REL,LUKE,mulang} as well. However, the bigger part of this work focuses on performing these tasks in general-domain, often times considering Wikipedia pages as entities \cite{nlpnotes}. Hence, there is no guarantee that these approaches will perform well in funding domain.
+\section{Objective}
 
-There are significant amount of differences between performing EL in general-domain and in funding domain. First of all, a different knowledge repository is needed as most of the smaller funders do not exist in general-purpose knowledge repositories.  Another challenge is the fact that some information that is deemed highly important in general-domain ED may not be as informative in this domain. For example, \cite{raiman} reported that ED would almost be solved if entity type information could be estimated better. However, in funding domain, some of the most ambiguous mentions are the ones referring to ministries, as a lot of countries may have a ministry with the same name. In these cases, the type of the mentions being, for example, governmental organizations would not provide any clue. 
-
-Funding domain introduces additional challenges for the NER task as well. For example, the mentions of organizations that are not funders should not be extracted. Another challenge is the limited amount of labelled data. In general-domain setting, Wikipedia could be exploited to extract millions of samples \cite{bunescu-pasca-2006-using}. Supervised neural architectures for NER require a large amount of training data to obtain high performance \cite{NERsurvey}.
-
-Considering the mentioned differences, this thesis aims to answer the following research question:
+The objective of this research is to adapt the current advancements on EL and its subtasks to be able to improve the quality of funding information extraction. Considering the challenges funding domain adds to EL, this thesis aims to answer the following research question:
 
 \begin{quote}\emph{RQ: Is it possible to use neural approaches for Entity Linking in funding domain, where labelled data is limited and a domain-specific knowledge repository is used?}\end{quote}
 
-\textcolor{red}{Explain how the research question will be answered and that the data/resources from Elsevier will be used.}
-
-\textcolor{red}{Explain what each section entails in this chapter.}
-\textcolor{red}{Add stuff from Radboud Writing Lab session}
-\textcolor{red}{Put some part of this in a section called Research something}
-\newpage
-\section{Background and Motivation}
-Keep the part up (copied directly from the proposal) short and put most of them here, including the research question
-
-\newpage
-\section{Task Definition}
-In this thesis, the aim is to perform Entity Linking (EL) in funding domain. Typically, EL consists of two subtasks, Named Entity Recognition (NER) and Entity Disambiguation (ED).
-
-Given a piece of text $d=\{x_1,...,x_N\}$ of $N$ tokens, the task of NER is to identify a set of spans $M = \{m_i \mid m_i = \{x_s,..,x_e\}, s \geq 1 \land s\geq e \land N \geq e\}$, where each span corresponds to an object, person or even a piece of information of interest. These spans are called named entities, or mentions. Usually, detecting the types of the extracted mentions is also part of the NER task. The available mention types differ among systems based on their objectives. In this thesis, each mention $m_i$ corresponds to either a \textit{Funding Organization} ($ORG$)  or a \textit{Grant Number} ($GRT$). Hence, $type(m_i) \in \{ORG,GRT\}$. Throughout this research, it is assumed that the mentions are not nested and are not overlapping.
-
-Given the set of mentions $M$, the aim of ED is to link each mention to their corresponding entity $e_i \in \mathcal{E} $ in a knowledge repository. A knowledge repository is a collection of entities, and may contain information on the entities and relations between them. The contents and specifications of the knowledge repository used is task-dependent. The task of ED is not trivial as many different mentions may be used to refer to the same entity, or the same mention may be used to refer to different entities. When the correct link of a mention $m_i$ is entity $e_i$, this will be denoted as $link(m_i) = e_i $.  Another thing to note is that some mentions may not correspond to any entity in the target knowledge repository. These mentions are usually referred to as \textit{NIL Mentions}. To denote these cases, a NIL entity $\emptyset \in \mathcal{E}$ will be used. In this thesis, a knowledge repository of funding organizations is used, hence, only the mentions with type $ORG$ will be considered for ED.
-
-Sometimes, the set of entities $\mathcal{E}$ may be extremely large. In that case, a Candidate Selector (CS) may be used to limit the search space. The aim of the CS is to extract a set of candidate entities $C_i = \{e_1,...e_K\} \subset \mathcal{E} $ for a given mention $m_i$. Usually the size of $C_i$ is much smaller than that of $\mathcal{E}$. This enables using more complex algorithms for ED as it reduces the number of entities to consider.
-
-Lastly the task of EL, which is the aim of this thesis, is to extract a set of mention-entity pairs from an input text $d$. In this thesis, as only the $ORG$ mentions will be linked, the objective can be defined as exracting the set $T = E_{ORG} \cup M_{GRT}$ for each input $d$, where,
-\begin{equation}
-E_{ORG}=\{(m_i,e_i) \mid m_i \in M \land e_i \in \mathcal{E} \land link(m_i)=e_i \land type(m_i) = ORG\}
-\end{equation}
-and 
-\begin{equation}
-M_{GRT} = \{m_i \mid m_i \in M \land type(m_i) = GRT\}.
-\end{equation}
-
-\newpage
 \section{Approach and Contributions}
+Initially, the literature on general-domain NER, ED and EL solutions is reviewed. Among the reviewed solutions, some of them are selected for experimentation based on specific criteria. It was checked whether the selected solutions perform well compared to others, and whether they can be adapted to the task at hand without losing their core properties. For example, a solution that is based on graph structures was not found convenient, as that information is not available. Moreover, it was valued that the model should offer enough flexibility so that some components can be modified to capture the important aspects of funding information extraction. In addition, it was taken into consideration that the selected solutions should not require too much computational power or too much labelled data as both resources are limited. The literature on domain-specific approaches were also reviewed to obtain some insights on the challenges other domains had faced and the respective solutions. Lastly, various techniques on domain adaptation of neural language models and different entity embeddings were investigated as both emerged to be crucial elements of possible solutions.  
 
-\newpage
+After careful consideration, it was decided to develop two separate components for NER and ED to perform EL instead of a single end-to-end component. This decision was made to have a more explainable system and to have a system that is less computationally demanding to train. For the NER component, two systems are selected: the NER model that is proposed by Akbik et al. \cite{flairlib} and the NER system described in \cite{BERT}, due to BERT's \cite{BERT} recent success. For ED, BLINK's architecture \cite{scalablezeroshot} is selected because of its flexibility and success in zero-shot setting. Moreover, recently an end-to-end neural system to perform EL on questions, ELQ \cite{elq}, is proposed. The architecture of ELQ encompasses the neural candidate selector of BLINK. Hence, it will be possible to extend an ED system built inspired by BLINK to perform mention detection following ELQ. Furthermore, as BERT takes part in the majority of experiments, a BERT model is further pretrained on the funding information sentences and used in both NER and ED systems. 
+
+Elsevier B.V.\footnote{\url{https://www.elsevier.com/}} uses Natural Language Processing (NLP) solutions to extract funding information from academic articles. Later on, this information is displayed in some of its products such as Scopus\footnote{\url{https://www.scopus.com/}}, one of the world's largest citation and abstract databases. Elsevier has a high-quality labelled dataset for this task and a domain-specific KR for funding organizations. The chosen models are trained and evaluated using the labeled dataset provided by Elsevier, and also disambiguation is performed to the provided KR. The developed models are compared with each other and the ones that are currently being used by Elsevier to determine the best method and to show the effectiveness of neural approaches.
+
+The contributions of this thesis can be summarized as:
+\renewcommand{\labelenumi}{\arabic{enumi}.} 
+\begin{enumerate}
+    \item Training a new BERT model, BERT$_{SC}$, for funding information extraction and showing its effectiveness.
+    \item Developing a neural EL solution to extract mentions of funding organizations and grant numbers simultaneously, and to disambiguate the former to a domain-specific KR. 
+    \item Modifying BLINK's candidate selection architecture to makes use of a binary classification setting for reducing the amount of memory required during training and for incorporating NIL mentions intuitively.
+    \item Showing the effectiveness of a minimal linear reranker that can work with the proposed candidate selector.
+\end{enumerate}
+
+We believe that this research will be influential for other domains to make use of the state-of-the-art neural architectures for EL and will provide important insights on possible strengths and weaknesses of utilizing such systems. Moreover, the developed neural components could be used as a part of a single end-to-end funding information extraction model in the future.
+
 \section{Outline}
-Explain what each following chapter will present
+The aim of Chapter \ref{chap:rw} is to review the recent literature on NER, ED and EL, as well as various domain-specific solutions to these problems. Literature on entity embeddings and domain adaptation of neural language models are also touched upon due to their relevance in proposed solutions. Lastly, notable previous work on funding information extraction is presented. In Chapter \ref{chapter:Approach}, the task of EL in funding domain is formally defined, the approach to tackle this task is presented and the models used are explained in detail. The dataset used, experimentation, results and discussion is included in Chapter \ref{sec:Evaluation}. Chapter \ref{chapter:Conclusion} concludes this thesis by summarizing the findings and providing a course of direction for future research.
 
-\newpage
 \chapter{Related Work}
-
+\label{chap:rw}
 %\cite{BERTLayers}: they also report fine tuning is end to end instead of feature based approach even when all labels are combined (check conclusion)
 There is a large amount of literature on Entity Linking (EL) and its subtasks, Named Entity Recognition (NER) and Entity Disambiguation (ED). The bigger part of this literature focuses on performing these tasks in the general-domain setting, often times considering Wikipedia pages as entities \cite{nlpnotes}. While this line of research introduces the state-of-the-art approaches, there is no guarantee that these approaches will perform well in a domain-specific setting with a custom Knowledge Repository (KR). Hence, domain-specific literature is also investigated to get insights on adapting general-purpose methods to specific domains.
 
@@ -297,11 +284,29 @@ For the NER component, several models were implemented and tested. The first mod
 
 Flair$^{NER}$ is based on Contextual String Embeddings (CSE) \cite{flairpaper}, which are obtained using the concatenation of vectors from a Left-to-Right and a Right-to-Left language model. However, \cite{BERT} reports that BERT is inherently more powerful than such language models as it is using MLM objective, that enables it to train a single representation for which both right and left contexts are used. Because of this claim and the recent popularity of BERT models, it is decided to experiment with BERT as well, which will be denoted as BERT$^{NER}$. 
 
-As recent research showed the importance of domain adaptation \cite{DontStop,exBERT,quote3}, a BERT model is pretrained further on funding acknowledgement sentences using Task-Adaptive Pretraining (TAPT) \cite{DontStop}. This model is denoted as BERT$_{SC}$. Later on, an NER model is trained using BERT$_{SC}$, BERT$_{SC}^{NER}$. Section \ref{sec:BERT} focuses on the BERT architecture and the domain adaptation procedure.
+As recent research showed the importance of domain adaptation \cite{DontStop,exBERT,quote3}, a BERT model is pretrained further on funding acknowledgement sentences using Task-Adaptive Pretraining (TAPT) \cite{DontStop}. This model is denoted as BERT$_{SC}$. Later on, an NER model is trained using BERT$_{SC}$, BERT$_{SC}^{NER}$. 
 
 For the ED component, the biencoder of BLINK architecture proposed by Wu et al. (2020) \cite{scalablezeroshot} is implemented. BLINK consists of two models, a biencoder inspired by \cite{polyencoder} for candidate entity selection and a cross-encoder \cite{polyencoder} for candidate entity reranking. As input, it utilizes mentions with their surrounding context and entity titles with their descriptions. The reason why this architecture was chosen is five-fold. First, BLINK can work in zero-shot setting, which is needed for this research as the training data does not cover the whole entity space. Second, the inference time is not long, and third, the authors demonstrate that this approach obtains state-of-the-art performance on both zero-shot and general setting. Lastly, BLINK's architecture can be adapted to the setting of this work without losing any important properties, and it can be extended to perform end-to-end EL following the ELQ architecture \cite{elq}. In this work, for efficient inference, a linear model is used as a reranker instead of the cross-encoder.
 
-Section \ref{sec:NERMEThod} introduces Flair$^{NER}$, BERT$^{NER}$ and BERT$_{SC}^{NER}$, and Section \ref{sec:entdismethod} explains the methodology used for ED.
+Section \ref{sec:taskdef} defines the problem this thesis is tackling formally. Section \ref{sec:BERT} focuses on the BERT architecture and the domain adaptation procedure. Section \ref{sec:NERMEThod} introduces Flair$^{NER}$, BERT$^{NER}$ and BERT$_{SC}^{NER}$, and Section \ref{sec:entdismethod} explains the methodology used for ED.
+
+
+\section{Formal Task Definition}
+\label{sec:taskdef}
+Given a piece of text $d=\{x_1,...,x_N\}$ of $N$ tokens, the task of NER is to identify a set of spans $M = \{m_i \mid m_i = \{x_s,..,x_e\}, s \geq 1 \land s\geq e \land N \geq e\}$, where each span corresponds to a mention. Usually, detecting the types of the extracted mentions is also part of the NER task. The available mention types differ among systems based on their objectives. In this thesis, each mention $m_i$ corresponds to either a \textit{Funding Organization} ($ORG$)  or a \textit{Grant Number} ($GRT$). Hence, $type(m_i) \in \{ORG,GRT\}$. Throughout this research, it is assumed that the mentions are not nested and are not overlapping.
+
+Given the set of mentions $M$, the aim of ED is to link each mention to their corresponding entity $e_i \in \mathcal{E} $ in a KR. A knowledge repository is a collection of entities, and may contain information on the entities and relations between them. The contents and specifications of the KR used is task-dependent. The task of ED is not trivial as many different mentions may be used to refer to the same entity, or the same mention may be used to refer to different entities. When the correct link of a mention $m_i$ is entity $e_i$, this will be denoted as $link(m_i) = e_i $.  Another thing to note is that some mentions may not correspond to any entity in the target knowledge repository. These mentions are usually referred to as \textit{NIL Mentions}. To denote these cases, a NIL entity $\emptyset \in \mathcal{E}$ will be used. In this thesis, a KR of funding organizations is used, hence, only the mentions with type $ORG$ will be considered for ED.
+
+Sometimes, the set of entities $\mathcal{E}$ may be extremely large. In that case, a Candidate Selector (CS) may be used to limit the search space. The aim of the CS is to extract a set of candidate entities $C_i = \{e_1,...e_K\} \subset \mathcal{E} $ for a given mention $m_i$. Usually the size of $C_i$ is much smaller than that of $\mathcal{E}$. This enables using more complex algorithms for ED as it reduces the number of entities to consider.
+
+Lastly the task of EL, which is the aim of this thesis, is to extract a set of mention-entity pairs from an input text $d$. In this thesis, as only the $ORG$ mentions will be linked, the objective can be defined as exracting the set $T = E_{ORG} \cup M_{GRT}$ for each input $d$, where,
+\begin{equation}
+E_{ORG}=\{(m_i,e_i) \mid m_i \in M \land e_i \in \mathcal{E} \land link(m_i)=e_i \land type(m_i) = ORG\}
+\end{equation}
+and 
+\begin{equation}
+M_{GRT} = \{m_i \mid m_i \in M \land type(m_i) = GRT\}.
+\end{equation}
 
 \section{BERT}
 \label{sec:BERT}
@@ -512,7 +517,7 @@ In Section \ref{sec:EvalExpSetup}, the experimental setup is presented. The data
 \subsection{Data}
 \label{sec:EvalExpSetupData}
 
-The dataset for funding data extraction and the knowledge repository (KR) for ED used in this research is provided by Elsevier B.V.\footnote{\url{https://www.elsevier.com/}}. The dataset consists of a set of labelled articles annotated by humans. To create this dataset, each article is annotated by three people. First, two annotators extracted the funding information from the articles independently. Then, a third annotator harmonized the decisions of the previous two annotators, resolving the conflicts if necessary. 
+The dataset for funding data extraction and the knowledge repository (KR) for ED used in this research is provided by Elsevier B.V.. The dataset consists of a set of labelled articles annotated by humans. To create this dataset, each article is annotated by three people. First, two annotators extracted the funding information from the articles independently. Then, a third annotator harmonized the decisions of the previous two annotators, resolving the conflicts if necessary. 
 
 For developing models and evaluating various approaches, the dataset is divided into four subsets: Training, Validation$^{1}$, Validation$^{2}$ and Test. The Training split is used to train the models. Validation$^{1}$ split is used to monitor the progress of training, while Validation$^{2}$ split is used to select the best approach for each task. The intermediate error analyses are done on the Validation$^{1}$ split. Test is used to evaluate only the Elsevier baselines and the selected approach for each task. The splits are aranged such that there is no overlap in terms of articles. Table \ref{tab:goldstats} shows the number of annotated articles contained in each split.
 
@@ -624,7 +629,7 @@ Figure \ref{fig:entpopul} shows the number of occurrences of the top 25 most fre
     \label{tab:goldstatsed3}
 \end{table}
 
-\begin{figure}[H]
+\begin{figure}
     \centering
     \includegraphics[scale=0.6]{ent_occ.png}
     \caption{Number of occurrences of top 25 most frequent entities. Statistics obtained using Training and Validation$^1$ splits.}
@@ -1344,7 +1349,6 @@ In addition, foreign text is not always handled properly. Trying a multilingual 
     \end{minipage}
 }\captionof{figure}{BERT$_{SC}^{NER}$ makes a mistake on a mention with foreign name.}
 \end{center}
-\newline
 \begin{center}
 \fbox{
     \begin{minipage}{0.8\linewidth}
@@ -1448,6 +1452,7 @@ It is not clear from the gold annotations whether the funding programs should al
 
 
 \chapter{Conclusion}
+\label{chapter:Conclusion}
 \begin{itemize}
     \item Put Future Work somewhere here.
     \item Put Limitations here. (?)
