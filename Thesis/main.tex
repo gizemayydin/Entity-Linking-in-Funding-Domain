@@ -15,7 +15,7 @@
 \usepackage{hyperref}           % page numbers and '\ref's become clickable
 \usepackage{todonotes}
 \usepackage{float}
-
+\usepackage{caption}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SET TITLE PAGE VALUES HERE %%
@@ -235,7 +235,7 @@ Kolitsas et al. (2018) \cite{kolitsas} proposed the first end-to-end neural EL s
 
 Another neural approach that can perform both NER and ED in an end-to-end fashion is proposed by Martins et al. in 2019 \cite{StackLSTM}. The approach makes use of Stack-LSTMs \cite{actualStackLSTM} to detect mentions on the fly rather than detecting them for the whole sequence at a time. For each token in the sequence, an action is predicted. This action can be: \textit{Shift}, \textit{Out} or \textit{Reduce}.  \textit{Out} means that the token at hand is not part of a mention, while \textit{Shift} means that it is.  After all the tokens of the mention is marked with consecutive \textit{Shift} operations, \textit{Reduce} is performed, meaning that the detected mention is disambiguated. There are multiple \textit{Reduce} actions, one for each mention type. Hence, the type of the \textit{Reduce} action also predicts the type of the mention. The model outputs a probability distribution over the possible action space for each step, and the action with the highest probability is selected. In the disambiguation step, first, the mention is classified to determine if it is a NIL-mention or not. If it is not, a candidate entity set is selected with respect to entity embeddings obtained by \cite{yamada-etal-2017-learning} and prior probabilities. Then, a score is assigned to each candidate entity by utilizing an affine transformation function, and the mention is linked to the entity with the highest score. The model is trained with a multi-task learning setting of three tasks: NER, NIL-mention detection and ED. For NER, the loss is calculated as the cross-entropy between the gold actions and the selected actions. For NIL detection, binary cross-entropy is utilized. Lastly, for ED, cross-entropy over the candidate entities is calculated. The authors show that performing NER and ED jointly benefits both of the tasks, by comparing the performance of a joint architecture with two different architectures. However, for the NER task, both \cite{flairpaper} and \cite{BERT} outperform the work of \cite{StackLSTM}, and in terms of EL, the work fails to outperform \cite{kolitsas}. This work is still very influential, especially as they include NIL-mentions in their research.
 
-In 2020, van Hulst et al. proposed REL \cite{REL}, an EL toolkit that utilizes state-of-the-art NLP research, outperforming \cite{kolitsas} in terms of micro-F1 score in AIDA CoNLL dataset. REL tackles the EL problem in three steps: NER, candidate selection and ED. For NER, they utilize Flair, namely, the sequence labelling architecture and Contextual String Embeddings proposed by \cite{flairpaper}. For each mention, up to 4 candidates are selected using commonness, and up to 3 candidates are selected based on the similarity between the context of the mention and entity embeddings. Entity embeddings are provided by \cite{kolitsasEmbed}, the same ones used in \cite{kolitsas}. For ED, MentNorm by Le and Titov \cite{mentnorm} is used. Apart from obtaining state-of-the-art results, REL also offers a modular architecture, allowing easy replacement of components and it does not require a GPU during inference time \cite{REL}. The success of REL in terms of performance and efficiency is one of the factors why Contextual String Embeddings are in the agenda of experiments for this work. However, MentNorm is not suitable for funding domain because of its dependency on entity coherence. This work also inspired this research in the sense that a comparable or higher performance than that of \cite{kolitsas} can be obtained even when NER and ED are performed separately, which is advantageous in terms of runtime and explainability.
+In 2020, van Hulst et al. proposed REL \cite{REL}, an EL toolkit that utilizes state-of-the-art NLP research, outperforming \cite{kolitsas} in terms of micro F1 score in AIDA CoNLL dataset. REL tackles the EL problem in three steps: NER, candidate selection and ED. For NER, they utilize Flair, namely, the sequence labelling architecture and Contextual String Embeddings proposed by \cite{flairpaper}. For each mention, up to 4 candidates are selected using commonness, and up to 3 candidates are selected based on the similarity between the context of the mention and entity embeddings. Entity embeddings are provided by \cite{kolitsasEmbed}, the same ones used in \cite{kolitsas}. For ED, MentNorm by Le and Titov \cite{mentnorm} is used. Apart from obtaining state-of-the-art results, REL also offers a modular architecture, allowing easy replacement of components and it does not require a GPU during inference time \cite{REL}. The success of REL in terms of performance and efficiency is one of the factors why Contextual String Embeddings are in the agenda of experiments for this work. However, MentNorm is not suitable for funding domain because of its dependency on entity coherence. This work also inspired this research in the sense that a comparable or higher performance than that of \cite{kolitsas} can be obtained even when NER and ED are performed separately, which is advantageous in terms of runtime and explainability.
 
 Broscheit (2020) \cite{bertEL} proposed an architecture that jointly does NER and ED using BERT. In this approach, the task of EL is framed as a per-token multi-class classification problem. The model utilizes a pretrained BERT model and an output classification layer on top of it. Even though this approach is a big simplification on the EL task, it performs only a few points off compared to \cite{kolitsas}.  However, as each entity is cast as a class, the model cannot disambiguate unseen entities. In real-word, KRs keep growing, and hence it is important for the system to be extendable for entities that do not exist in the training set \cite{gupta}. Moreover, some training datasets may not cover the whole entity vocabulary, such as the one used in this work. However, this research is very inspiring in terms of showing BERT's capability to learn the task of EL. It also contributed in the decision process of experimenting with BERT as a neural language model to be used in this work.
 
@@ -291,15 +291,15 @@ Another methodology is introduced by Poerner et al.  in 2020, and is called Gree
 \newpage
 \chapter{Approach}
 \label{chapter:Approach}
-To tackle the Entity Linking (EL) problem in funding domain, a two-step solution is developed. The first step is Named Entity Recognition (NER) and the second step is Entity Disambiguation (ED). For both of these components, after an extensive literature review, state-of-the-art systems that can be adapted to the problem at hand are determined.
+To tackle the Entity Linking (EL) problem in funding domain, a two-step solution is developed. The first step is Named Entity Recognition (NER) and the second step is Entity Disambiguation (ED). For both of these steps, after an extensive literature review, state-of-the-art systems that can be adapted to the problem at hand are determined.
 
-For the NER component, several models were implemented and tested. The first model that is tried is the sequence labelling architecture proposed by Akbik et al. in 2018 \cite{flairpaper}. The choice of experimenting with this model was due to its success in English NER. Moreover, this model is used by REL \cite{REL}, which achieved state-of-the-art results on Entity Linking, and AckExtract \cite{AckExtract}, a system for extracting funder organization mentions. This model will be denoted as Flair$^{NER}$.
+For the NER component, several models were implemented and tested. The first model that is tried is the sequence labelling architecture proposed by Akbik et al. in 2018 \cite{flairpaper}. The choice of experimenting with this model was due to its success in English NER. Moreover, this model is used by REL \cite{REL}, a system that achieved state-of-the-art results on EL, and AckExtract \cite{AckExtract}, a system for extracting funder organization mentions. This model will be denoted as Flair$^{NER}$.
 
 Flair$^{NER}$ is based on Contextual String Embeddings (CSE) \cite{flairpaper}, which are obtained using the concatenation of vectors from a Left-to-Right and a Right-to-Left language model. However, \cite{BERT} reports that BERT is inherently more powerful than such language models as it is using MLM objective, that enables it to train a single representation for which both right and left contexts are used. Because of this claim and the recent popularity of BERT models, it is decided to experiment with BERT as well, which will be denoted as BERT$^{NER}$. 
 
-As recent research showed the importance of domain adaptation \textcolor{red}{\cite{}}, a BERT model is pretrained further on funding acknowledgement sentences using Task-Adaptive Pretraining (TAPT) \cite{DontStop}. This model is denoted as BERT$_{SC}$. Later on, an NER model is trained using BERT$_{SC}$, BERT$_{SC}^{NER}$. Section \ref{sec:BERT} focuses on the BERT architecture and the domain adaptation procedure.
+As recent research showed the importance of domain adaptation \cite{DontStop,exBERT,quote3}, a BERT model is pretrained further on funding acknowledgement sentences using Task-Adaptive Pretraining (TAPT) \cite{DontStop}. This model is denoted as BERT$_{SC}$. Later on, an NER model is trained using BERT$_{SC}$, BERT$_{SC}^{NER}$. Section \ref{sec:BERT} focuses on the BERT architecture and the domain adaptation procedure.
 
-For the ED component, the Biencoder of BLINK architecture proposed by Wu et al. (2020) \cite{scalablezeroshot} is implemented. BLINK consists of two models, a biencoder inspired by \cite{polyencoder} for candidate entity selection and a cross-encoder \cite{polyencoder} for candidate entity reranking. As input, it utilizes mentions with their surrounding context and entity titles with their descriptions. The reason why this architecture was chosen is five-fold. First, BLINK can work in zero-shot setting, which is needed for this research as the training data does not cover the whole entity space. Second, the inference time is not long, and third, the authors demonstrate that this approach obtains state-of-the-art performance on both zero-shot and general setting. Lastly, BLINK's architecture can be adapted to the setting of this work without losing any important properties, and it can be extended to perform end-to-end EL following the ELQ architecture \cite{elq}. The cross-encoder is not implemented in order not to increase the inference time. 
+For the ED component, the biencoder of BLINK architecture proposed by Wu et al. (2020) \cite{scalablezeroshot} is implemented. BLINK consists of two models, a biencoder inspired by \cite{polyencoder} for candidate entity selection and a cross-encoder \cite{polyencoder} for candidate entity reranking. As input, it utilizes mentions with their surrounding context and entity titles with their descriptions. The reason why this architecture was chosen is five-fold. First, BLINK can work in zero-shot setting, which is needed for this research as the training data does not cover the whole entity space. Second, the inference time is not long, and third, the authors demonstrate that this approach obtains state-of-the-art performance on both zero-shot and general setting. Lastly, BLINK's architecture can be adapted to the setting of this work without losing any important properties, and it can be extended to perform end-to-end EL following the ELQ architecture \cite{elq}. In this work, for efficient inference, a linear model is used as a reranker instead of the cross-encoder.
 
 Section \ref{sec:NERMEThod} introduces Flair$^{NER}$, BERT$^{NER}$ and BERT$_{SC}^{NER}$, and Section \ref{sec:entdismethod} explains the methodology used for ED.
 
@@ -311,12 +311,12 @@ Transformers) is a language model introduced by Devlin et al. in 2019, that obta
 
 The authors of BERT criticize previous neural language models on the fact that they are learning unidirectional representations. They argue that this can deteriorate the performance for token-level tasks where information from both directions are very important. By using Masked Language Modeling (MLM) task, they manage to train a representation utilizing both left-to-right and right-to-left directions simultaneously. This task refers to masking words randomly and predicting the masked words only using the context. BERT also utilizes the Next Sentence Prediction (NSP) task, in order to learn the relationship between two input sentences. For this task, the final hidden vector corresponding to the [CLS] token is used to distinguish whether the two input sentences are actually adjacent or not.
 
-BERT is pretrained with BookCorpus \cite{bookscorpus} and English Wikipedia \cite{BERT}. The authors introduce two different architectures, BERT$_{BASE}$ and BERT$_{LARGE}$, which have 110M and 340M parameters respectively. In this study, BERT$_{BASE}$ is used due to computational limitations. For each architecture, there are also two different versions based on case-sensitivity. The authors obtain state-of-the-art results in various Natural Language Processing problems by adding minimal task-specific layers and fine-tuning all the parameters end-to-end.
+BERT is pretrained with BookCorpus \cite{bookscorpus} and English Wikipedia. The authors introduce two different architectures, BERT$_{BASE}$ and BERT$_{LARGE}$, which have 110M and 340M parameters respectively. In this study, BERT$_{BASE}$ is used due to computational limitations. For each architecture, there are also two different versions based on case-sensitivity. The authors obtain state-of-the-art results in various NLP problems by adding minimal task-specific layers and fine-tuning all the parameters end-to-end.
 
-\subsection{Domain Adaptation of BERT}
-Previous work suggests that pretraining a BERT model with in-domain data improves the overall performance of the model for the task at hand \textcolor{red}{\cite{}}. For funding data extraction, the input sentences are the ones where authors acknowledge the financial support they had received. Hence, it is trivial that these sentences differ significantly from the data that BERT was pretrained on, i.e. books and Wikipedia.  For this purpose, a domain-relevant BERT, denoted by BERT$_{SC}$, is trained. The choice of terminology is attributed to the fact that the training data consists of a subset of articles that can be found in Scopus\footnote{\url{https://www.scopus.com/}}, one of the largest database for peer-reviewed literature. For each article, Scopus displays the corresponding funding text, using artificial intelligence solutions developed by Elsevier. These texts are used as training data for BERT$_{SC}$.
+\section{Domain Adaptation of BERT}
+Previous work suggests that pretraining a BERT model with in-domain data improves the overall performance of the model for the task at hand \cite{DontStop,exBERT,quote3}. For funding data extraction, the input sentences are the ones where authors acknowledge the financial support they had received. Hence, it is trivial that these sentences differ significantly from the data that BERT was pretrained on, i.e. books and Wikipedia.  For this purpose, a domain-relevant BERT, denoted by BERT$_{SC}$, is trained. The choice of terminology is attributed to the fact that the training data consists of a subset of articles that can be found in Scopus\footnote{\url{https://www.scopus.com/}}, one of the largest database for peer-reviewed literature. For each article, Scopus displays the corresponding funding text, using artificial intelligence solutions developed by Elsevier. These texts are used as training data for BERT$_{SC}$.
 
-To pretrain BERT$_{SC}$, Task-Adaptive Pretraining (TAPT) schema proposed by \cite{DontStop} is used. The idea behind TAPT is to pretrain a BERT model, which was pretrained on a generic dataset, further using unlabelled data from the specified task with MLM objective. The authors compare this approach with Domain-Adaptive Pretraining (DAPT), which they define as pretraining a BERT model from scratch using documents from a specific domain. DAPT is much more expensive in terms of both data and computational power compared to TAPT, and yet the authors show that TAPT performs comparable to DAPT. Although there are other works on adapting BERT to a specific domain in an inexpensive way \textcolor{red}{\cite{}}, TAPT was chosen due to its easy-to-use, open-source implementation\footnote{\url{https://github.com/allenai/dont-stop-pretraining}}.
+To pretrain BERT$_{SC}$, Task-Adaptive Pretraining (TAPT) schema proposed by \cite{DontStop} is used. The idea behind TAPT is to pretrain a BERT model, which was pretrained on a generic dataset, further using unlabelled data from the specified task with MLM objective. The authors compare this approach with Domain-Adaptive Pretraining (DAPT), which they define as pretraining a BERT model from scratch using documents from a specific domain. DAPT is much more expensive in terms of both data and computational power compared to TAPT, and yet the authors show that TAPT performs comparable to DAPT. Although there are other works on adapting BERT to a specific domain in an inexpensive way \cite{exBERT,word2vectoBERT}, TAPT was chosen due to its easy-to-use, open-source implementation\footnote{\url{https://github.com/allenai/dont-stop-pretraining}}.
 
 
 \section{Named Entity Recognition}
@@ -324,10 +324,8 @@ To pretrain BERT$_{SC}$, Task-Adaptive Pretraining (TAPT) schema proposed by \ci
 
 To train  Flair$^{NER}$, BERT$^{NER}$ and BERT$^{NER}_{SC}$, the NER problem is cast as a token classification task using the IOB tagging schema. In this schema, the initial tokens of the mentions are labelled with a ``B'' (``Beginning'') and the remaining tokens are labelled with an ``I'' (``Inside''). The tokens that are not a part of any mention are labelled with ``O'' (``Outside''). In NER, there may be different types of mentions. In that case, the type information is appended after the ``B'' and ``I'' labels. Since there are two types in this work, \textit{Organization} and \textit{Grant}, a total of $5$ tags are used: $\{ \text{B-ORG}, \text{I-ORG}, \text{B-GRT}, \text{I-GRT}, \text{O} \}$.
 
-Following sections explain Flair$^{NER}$, BERT$^{NER}$ and BERT$^{NER}_{SC}$ in detail.
-
-\subsection{Flair$^{NER}$}
-The sequence labelling architecture proposed by Akbik et al. \cite{flairpaper}, denoted by Flair$^{NER}$ in this work, utilizes a BiLSTM-CRF \cite{BiLSTMCRF} which can be trained with the labelled task dataset. The novelty of their approach comes from the way that the input is represented. In this paper, the authors propose Contextualized String Embeddings (CSE) \cite{flairpaper}. CSE represent a word based on its characters and are contextualized, meaning that the representation of a word changes depending on its context. And as the words are represented using characters, the vocabulary size is smaller compared to word-level LMs. CSE are formed by concatenating a forward and a backward language model (LM). Both LMs are trained to predict the next character given the previous characters using an LSTM \cite{lstm}. In an input $I=\{c_1,...,c_k\}$ of $k$ characters, the contextual string embedding $CSE_w$ of a word $w=\{c_s,...,c_e\}$ can be defined as:
+\subsubsection{Flair$^{NER}$}
+The sequence labelling architecture proposed by Akbik et al., denoted by Flair$^{NER}$ in this work, utilizes a BiLSTM-CRF \cite{BiLSTMCRF} which can be trained with the labelled task dataset. The novelty of their approach comes from the way that the input is represented. In this paper, the authors propose Contextualized String Embeddings (CSE). CSE represent a word based on its characters and are contextualized, meaning that the representation of a word changes depending on its context. And as the words are represented using characters, the vocabulary size is smaller compared to word-level LMs. CSE are formed by concatenating a forward and a backward language model (LM). Both LMs are trained to predict the next character given the previous characters using an LSTM \cite{lstm}. For an input $I=\{c_1,...,c_k\}$ of $k$ characters, the contextual string embedding $CSE_w$ of a word $w=\{c_s,...,c_e\}$ can be defined as:
 \begin{equation}
     CSE_w = [ LSTM^{forward}_{Flair}(c_e | c_0,...,c_{e-1}); LSTM^{backward}_{Flair}(c_s | c_k,...,c_{s-1}) ]
 \end{equation}
@@ -338,7 +336,7 @@ The sequence labelling architecture proposed by Akbik et al. \cite{flairpaper}, 
     v_w = [CSE_w;GloVe_w]
 \end{equation}
 
-\noindent where $GloVe_w$ denotes the corresponding GloVe embeddings. The authors show that this representation achieves a higher performance compared to only using CSE, and hypothesize that GloVe embeddings may be capturing some semantic information that can complement CSE \cite{flairpaper}. However, the authors do not report significant performance gains when using additional task-specific character features, concluding that this information is captured by CSE \cite{flairpaper}. The resulting input representation is used by the BiLSTM-CRF model. Given an input string $d=\{x_1,...,x_N\}$ of $N$ words, let $r_i$ be the BiLSTM output for word $i$, such that:
+\noindent where $GloVe_w$ denotes the corresponding GloVe embeddings. The authors show that this representation achieves a higher performance compared to only using CSE, and hypothesize that GloVe embeddings may be capturing some semantic information that can complement CSE. However, the authors do not report significant performance gains when using additional task-specific character features, concluding that this information is captured by CSE. The resulting input representation is used by the BiLSTM-CRF model. Given an input string $d=\{x_1,...,x_N\}$ of $N$ words, let $r_i$ be the BiLSTM output for word $i$, such that:
 
 \begin{equation}
     r_i = BiLSTM_{Flair}(v_{x_1},...,v_{x_N})[i].
@@ -352,7 +350,7 @@ Since there are 5 labels in this task, $r_i \in \mathbb{R}^5$, modelling the pro
 
 \noindent where the matrices $\bold{W}$ and $\bold{b}$ store the weights and biases of each label transition. The label sequence with maximum probability is chosen as the final prediction. $LSTM^{forward}_{Flair}$ and $LSTM^{backward}_{Flair}$ are trained separately, and their parameters are frozen during the training of the other components added for NER. For the remaining parameters, the loss is set to the score difference of the gold label sequence and predicted label sequence.
 
-\subsection{BERT$^{NER}$ and BERT$^{NER}_{SC}$}
+\subsubsection{BERT$^{NER}$ and BERT$^{NER}_{SC}$}
 BERT$^{NER}$ is the same NER architecture proposed in \cite{BERT}. Let $d_t$ be the WordPiece-tokenized version of the input string $d=\{x_1,...,x_N\}$ of N words, such that:
 
 \begin{equation}
@@ -375,35 +373,33 @@ Following \cite{BERT}, the whole architecture is fine-tuned end-to-end. Cross-en
 
 \section{Entity Disambiguation}
 \label{sec:entdismethod}
-BLINK utilizes a candidate selector and a reranker to tackle the ED problem. The aim of candidate selection is to reduce the number of possible entities to consider for a given mention in a computationally cheap manner. This enables the usage of a more expensive but better algorithm on the reduced entity space to select the best entity, or not to select an entity at all. In this work, only the biencoder is implemented as fast inference is a must and the entity space is not very large. This section details the architectures used in BLINK and present the modifications made to adapt them to the task at hand.
-
-BLINK utilizes a biencoder architecture the a candidate selector (CS). The aim of the CS is to extract a candidate set $C_i$ from the entity set $\mathcal{E} - \emptyset$ for each mention $m_i$ , such that:
+BLINK utilizes a candidate selector (CS) and a reranker to tackle the ED problem. The aim of candidate selection is to reduce the number of possible entities to consider for a given mention in a computationally cheap manner. This enables the usage of a more expensive but better algorithm on the reduced entity space to select the best entity, or not to select an entity at all. The CS extracts a candidate set $C_i$ from the entity set $\mathcal{E} - \emptyset$ for each mention $m_i$ , such that:
 
 \begin{equation}
     C_i = \{e_1,...e_K\} 
 \end{equation}
 
-\noindent where $K$ is the number of candidates. In this work, we set $K=1$ in order to use this system as a single ED component.
+\noindent where $K$ is the number of candidates. When $K=1$, the system can work as a single ED component. In this work, only the biencoder of BLINK is implemented as fast inference is a must. A linear reranker model is trained instead of the cross-encoder. This section details the architectures used in BLINK and present the modifications made to adapt them to the task at hand.
 
 \subsubsection{Biencoder$_{B}$}
 \label{sec:biencoderbexplanation}
-The biencoder architecture used in BLINK is shown in Figure \ref{fig:biencoderB} (left). The architecture consists of two BERT models, $M_{Mention}$ and $M_{Candidate}$, first for encoding the mention representation $R_{Mention}$ and the second for encoding the candidate entity representation $R_{Candidate}$. The mention representation used in this work is identical with that of BLINK:
+The biencoder architecture used in BLINK is shown in Figure \ref{fig:biencoderB} (left). The architecture consists of two BERT models, $M_{Mention}$ and $M_{Entity}$, first for encoding the mention representation $R_{Mention}$ and the second for encoding the candidate entity representation $R_{Entity}$. The mention representation used in this work is identical with that of BLINK:
 
 \begin{equation}
     R_{Mention} = \text{[CLS]} \text{ left context } [M_s] \text{ mention }  [M_e] \text{ right context } \text{[SEP]}
 \end{equation}
 
 \noindent where $[M_s]$ and $[M_e]$ are two WordPiece tokens selected among the unused tokens of BERT. The aim of these tokens is to distinguish the mention from its context. 
-The candidate representation is different from BLINK which uses the title and entity description. In this work, the entity descriptions are not available. Each entity is associated with various labels and the country of origin. Both the labels and the country are crucial for disambiguation of funding organizations. Country information helps tremendously with ambiguous organization labels. Hence, the candidate entities are represented as:
+The candidate representation is different from BLINK which uses the title and entity description. In this work, the entity descriptions are not available. Each entity is associated with various labels and the country of origin. Both the labels and the country are crucial for disambiguation of funding organizations, and the latter helps tremendously with ambiguous organization labels. Hence, the candidate entities are represented as:
 
 \begin{equation}
-    R_{Candidate} = \text{[CLS] } \text{label}_{1} \ [E_l] \text{ ... } [E_l] \ \text{label}_{N_{label}} \ [E_c] \ \text{name}_{Country} \ \text{[SEP]}
+    R_{Entity} = \text{[CLS] } \text{label}_{1} \ [E_l] \text{ ... } [E_l] \ \text{label}_{N_{label}} \ [E_c] \ \text{name}_{Country} \ \text{[SEP]}
 \end{equation}
 
-\noindent where $N_{label}$ denotes the number of available labels per funding organization, and $\text{name}_{Country}$ is the name of the country as stated in the GeoNames\footnote{\url{https://www.geonames.org/}} database. $[E_l]$ and $[E_c]$ are special tokens similar to $[M_s]$ and $[M_e]$, and their aim is to separate different labels and the country information. The representations are passed through the BERT models, and the hidden state vectors of the last Transformer layer corresponding to the $[CLS]$ token are extracted to obtain the representations $r_{Candidate}$ and $r_{Mention}$, such that:
+\noindent where $N_{label}$ denotes the number of available labels per funding organization, and $\text{name}_{Country}$ is the name of the country as stated in the GeoNames\footnote{\url{https://www.geonames.org/}} database. $[E_l]$ and $[E_c]$ are special tokens similar to $[M_s]$ and $[M_e]$, and their aim is to separate different labels and the country information. The representations are passed through the BERT models, and the hidden state vectors of the last Transformer layer corresponding to the [CLS] token are extracted to obtain the representations $r_{Entity}$ and $r_{Mention}$, such that:
 
 \begin{equation}
-    r_{Candidate} = M_{Candidate}(R_{Candidate}) \text{ [CLS]}
+    r_{Entity} = M_{Entity}(R_{Entity}) \text{ [CLS]}
 \end{equation}
 
 and 
@@ -412,10 +408,10 @@ and
     r_{Mention} = M_{Mention}(R_{Mention})\text{ [CLS].}
 \end{equation}
 
-Then, the score of the mention and the candidate is defined to be the dot product of $r_{Candidate}$ and $r_{Mention}$:
+\noindent Then, the score of the mention and the candidate is defined to be the dot product of $r_{Entity}$ and $r_{Mention}$:
 
 \begin{equation}
-    Score(\textit{Mention},\textit{ Candidate}) = r_{Mention} \cdot r_{Candidate}.
+    Score(\textit{Mention},\textit{ Entity}) = r_{Mention} \cdot r_{Entity}.
 \end{equation}
 
 The candidate entity set $C_i$ of a mention $m_i$ is set to the top $K$ entities for which the score is highest, such that:
@@ -424,7 +420,7 @@ The candidate entity set $C_i$ of a mention $m_i$ is set to the top $K$ entities
     C_i = \{e_1,...,e_K | \ \nexists\hat{e} \ Score(m_i,\hat{e}) > \min_{e\in C_i}(Score(m_i, e )); \hat{e} \notin C_i; \ \hat{e} \in \mathcal{E}-\emptyset; \ C_i \subset \mathcal{E}-\emptyset  \}.
 \end{equation}
 
-In this work, different from BLINK, both $M_{Mention}$ and $M_{Candidate}$ are initialized with BERT$_{SC}$. To find the top K entities for a mention, BLINK utilizes FAISS \cite{faiss}, which performs approximate nearest neighbor search. Since the entity space is much smaller in this work, no approximation is used. 
+In this work, different from BLINK, both $M_{Mention}$ and $M_{Entity}$ are initialized with BERT$_{SC}$. To find the top K entities for a mention, BLINK utilizes FAISS \cite{faiss}, which performs approximate nearest neighbor search. Since the entity space is much smaller in this work, no approximation is used. 
 
 To train the biencoder, same strategy proposed in BLINK is used. For each mention, the loss is computed as:
 
@@ -463,7 +459,7 @@ Different from Biencoder$_{B}$, Biencoder$_{ADPT}$ uses a binary classification 
 \noindent where $m_k$ is a mention, $e_k \in \mathcal{E}-\emptyset$ is an entity and $l_k$ is the binary classification label of that sample. To get the class probabilities for each mention and entity pair, an additional linear layer is used. Then, the score of a pair is defined to be the probability of the positive class:
 
 \begin{equation}
-    Score_{ADPT}(\textit{Mention},\textit{ Candidate}) = \bold{W}_{ADPT} \ (r_{Mention} \odot r_{Candidate}) [positive]
+    Score_{ADPT}(\textit{Mention},\textit{ Entity}) = \bold{W}_{ADPT} \ (r_{Mention} \odot r_{Entity}) [positive]
 \end{equation}
 
 \noindent where $\odot$ refers to element-wise multiplication of the vectors, and $\bold{W}_{ADPT} \in \mathcal{R}^{768x2}$ is a matrix denoting the weights of the additional linear layer\footnote{the size of the final hidden vectors of BERT$_{SC}$ is 768 as it is trained from BERT$_{BASE}$}. The binary cross-entropy loss $L_{ADPT}$ is used to train this model:
@@ -478,7 +474,7 @@ As in BLINK, hard negatives are defined as the top Neg$_{H}$ entities predicted 
 
 The training is done in rounds, similar to BLINK (and BiEncoder$_{B}$) and \cite{googleintern}. In each round, a new set of hard negatives and random negatives are sampled, hence the training set is updated. However, hard negatives are added starting from the second round, as initially some of the model weights are initialized randomly, such as $\bold{W}_{ADPT}$. In this work, one round may correspond to one or more epochs (see Section \ref{sec:EvalExpSetupTraining})
 
-The number of random negatives in each round, Neg$_R$ is also a hyperparameter. In the first round of training, Neg$_R$ is set to 3 as the training time increases proportionally with Neg$_R$. In the following rounds, Neg$_R$ is selected based on the number of hard negative samples. After extracting all the hard negatives for the training set, the total number of such samples are calculated, which can be denoted as $Neg_{H}^{Sum}$. Then for each mention, $Neg_R = \lfloor Neg_{H}^{Sum}/ \text{(Number of Mentions)} \rceil$ entities are sampled randomly and added to the dataset. This way, it is aimed to have a similar proportion between random and hard negatives in the training set. The aim with this was to somehow mimic the strategy of \cite{googleintern}, who uses a multi-task learning setup with equal weights to incorporate both hard and random negatives. 
+The number of random negatives in each round, Neg$_R$ is also a hyperparameter. In the first round of training, Neg$_R$ is set to 3 as the training time increases proportionally with Neg$_R$. In the following rounds, Neg$_R$ is selected based on the number of hard negative samples. After extracting all the hard negatives for the training set, the total number of such samples are calculated, which can be denoted as $Neg_{H}^{Sum}$. Then for each mention, $Neg_R = \lfloor Neg_{H}^{Sum}/ \text{(Number of Mentions)} \rceil$ entities are sampled randomly and added to the dataset. This way, it is aimed to have a similar proportion between random and hard negatives in the training set. The aim with this was to somehow mimic the strategy of \cite{googleintern}, which uses a multi-task learning setup with equal weights to incorporate both hard and random negatives. 
 
 One interesting property of the setup of Biencoder$_{ADPT}$ is that for the mentions with more hard negatives, i.e. mentions that are ranked lower by the model, the training set has more hard negatives compared to random negatives. We hypothesize that the need for hard negatives are higher for these kind of mentions, as it seems that the random negatives were not enough to teach the model to make the correct decision in the first round.
 
@@ -486,12 +482,29 @@ In the setup for Biencoder$_{ADPT}$, it is intuitive to add NIL mentions to trai
 
 The architecture of Biencoder$_{ADPT}$ is shown in Figure \ref{fig:biencoderB} (right).
 
+\subsubsection{Linear Reranker}
+Instead of using the computationally expensive cross-encoder, a logistic regression model is used as a reranker. After selecting the best biencoder, the number of candidates $K$ is determined by investigating the change of recall with respect to the rank. After $K$ is selected, a training dataset is created by extracting the top $K$ entities for each mention. For the instances where the entity is the correct link for the mention, the class label is set to positive, and for the other instances, it is set to negative.
+
+As features to this linear model, the features with the highest importance is extracted from the current ED component used in Elsevier: score assigned by the candidate selector, maximum sorted Levenshtein similarity between the mention and the labels of the candidate entity, popularity of the candidate entity, link probability of the mention, and commonness.
+
+To calculate Levenshtein similarity, the normalized Levenshtein distance is subtracted from 1. For calculating the maximum sorted Levenshtein similarity for a given mention and entity, first the mention and the labels of the entity are tokenized. Then, the tokens of the mention and each label are sorted in alphabetic order. Levenshtein similarity is calculated between the mention for each entity label. The value of the feature is set to the maximum of these similarities. The sorted Levenshtein similarity is calculated using the Fuzzywuzzy library\footnote{\url{https://github.com/seatgeek/fuzzywuzzy}}.
+
+The popularity of an entity is defined as the number of times it appears as a link divided by the number of all links. Similarly, the link probability \cite{balog} of a mention is defined as the number of times the mention is linked to any entity in the KR divided by the number of times it appears in the dataset used for estimation. Commonness measures the maximum likelihood probability of an entity being the link to the given mention \cite{balog}. For a mention-entity pair, it is calculated as number of times that the mention was linked to the given entity, divided by the number of times that the mention appears as a link \cite{balog}. For popularity, link probability and commonness, the statistics used by Elsevier's ED is utilized. It is made sure that no document that is contained in the evaluation dataset (Validation$^1$, Validation$^2$ and Test splits, see Section \ref{sec:EvalExpSetupData}) is included in the estimation of these statistics.
+
+In the training data, the negative class is prominent as there is only a maximum of one positive entity per mention. To address this, class weights are used during the binary cross-entropy loss calculation. Each class is assigned a weight that is inversely proportional to the number of samples of that class in the training data normalized by the total number of samples. Two hyperparameters of the logistic regression model is tuned by grid search: the regularization strength and the ratio between L$_1$ and L$_2$ penalties. For the former, the search interval is set to [0,1] with a step size of 0.1, and for the latter, it is set to [1,10] with a step size of 1. Feature selection is also performed on all possible feature sets, excluding the ones that do not contain the score of the candidate selector as feature. Then, the best hyperparameter configuration and feature set is selected.
+
+During inference, the probability of the positive class is extracted for each mention-candidate entity pair. The mention is linked to the candidate entity with the highest score, if the score is greater than or equal to 0.5. Otherwise, the mention is linked to NIL. For experimental purposes, another NIL-mention detection threshold is selected within the interval [0.5,1] with using grid search with a step size of 0.001. 
+
+The linear reranker will be denoted by Reranker$_K$ where $K$ is the number of candidates.
+
+
+
 \newpage
 \chapter{Evaluation}
 \label{sec:Evaluation}
-In this work, different experiments were conducted to investigate the optimal Entity Linking (EL) approach for funding information extraction. First, BERT$_{SC}$, a BERT model that is adapted to funding text, is pretrained using the Task-Adaptive Pretraining (TAPT) strategy proposed by \cite{DontStop}. Then, different state-of-the-art Named Entity Recognition (NER) components are compared and a neural Entity Disambiguation (ED) model is developed. Lastly, the end-to-end Entity Linking performance of these approaches are investigated.
+In this work, different experiments were conducted to investigate the optimal Entity Linking (EL) approach for funding information extraction. First, BERT$_{SC}$, a BERT model that is adapted to funding text, is pretrained using the Task-Adaptive Pretraining (TAPT) strategy proposed by \cite{DontStop}. Then, different state-of-the-art Named Entity Recognition (NER) components are compared and a neural Entity Disambiguation (ED) model is developed. Lastly, the end-to-end EL performance of these approaches are investigated.
 
-In Section \ref{sec:EvalExpSetup}, the experimental setup is presented. The dataset used and the evaluation metrics are detailed in Section \ref{sec:EvalExpSetupData} and \ref{sec:EvalExpSetupEval} respectively. The training, hyperparameters and model selection is shown in Section \ref{sec:EvalExpSetupTraining}. Lastly, the result and the analysis are shown in Sections \ref{sec:EvalResults} and \ref{sec:EvalAnalysis}.
+In Section \ref{sec:EvalExpSetup}, the experimental setup is presented. The dataset used and the evaluation metrics are detailed in Section \ref{sec:EvalExpSetupData} and \ref{sec:EvalExpSetupEval} respectively. The training, hyperparameters and model selection is shown in Section \ref{sec:EvalExpSetupTraining}. Lastly, the result and the analysis are presented in Sections \ref{sec:EvalResults} and \ref{sec:EvalAnalysis}.
 
 \section{Experimental Setup}
 \label{sec:EvalExpSetup}
@@ -499,7 +512,7 @@ In Section \ref{sec:EvalExpSetup}, the experimental setup is presented. The data
 \subsection{Data}
 \label{sec:EvalExpSetupData}
 
-The dataset for funding data extraction and the knowledge repository for ED used in this research is provided by Elsevier B.V.\footnote{\url{https://www.elsevier.com/}}. The dataset consists of a set of labelled articles annotated by humans. To create this dataset, each article is annotated by three people. First, two annotators extracted the funding information from the articles independently. Then, a third annotator harmonized the decisions of the previous two annotators, resolving the conflicts if necessary. 
+The dataset for funding data extraction and the knowledge repository (KR) for ED used in this research is provided by Elsevier B.V.\footnote{\url{https://www.elsevier.com/}}. The dataset consists of a set of labelled articles annotated by humans. To create this dataset, each article is annotated by three people. First, two annotators extracted the funding information from the articles independently. Then, a third annotator harmonized the decisions of the previous two annotators, resolving the conflicts if necessary. 
 
 For developing models and evaluating various approaches, the dataset is divided into four subsets: Training, Validation$^{1}$, Validation$^{2}$ and Test. The Training split is used to train the models. Validation$^{1}$ split is used to monitor the progress of training, while Validation$^{2}$ split is used to select the best approach for each task. The intermediate error analyses are done on the Validation$^{1}$ split. Test is used to evaluate only the Elsevier baselines and the selected approach for each task. The splits are aranged such that there is no overlap in terms of articles. Table \ref{tab:goldstats} shows the number of annotated articles contained in each split.
 
@@ -517,17 +530,21 @@ For developing models and evaluating various approaches, the dataset is divided 
     \label{tab:goldstats}
 \end{table}
 
-For the ED and EL task, the Knowledge Repository provided by Elsevier is used. This repository contains 26,892 entities of funding organizations with information such as the country of origin, type of organization and different names that the organization can be referred to with. There are also sparse amount of relations between organizations to show affiliations and hierarchies. One interesting property of the repository is that most of the entities do not exist in general-purpose knowledge repositories. Hence, it is not trivial to obtain more information from other sources.
+For the ED and EL task, the KR provided by Elsevier is used. This repository contains 26,892 entities of funding organizations with information such as the country of origin, type of organization and different names that the organization can be referred to with. There are also sparse amount of relations between organizations to show affiliations and hierarchies. One interesting property of the KR is that most of the entities do not exist in general-purpose knowledge repositories. Hence, it is not trivial to obtain more information from other sources.
 
 Sometimes, organizations may change their names, or may be merged with other organizations. Hence, it is possible that one funding organization is referenced by multiple entities in the repository, which is not desirable. To prevent this, entities are grouped together based on the relations indicating such cases. This operation resulted in 25,859 entity groups. It is assumed that the entities in each group refer to the same organization, and hence can be used interchangeably. Another option could be to only keep the newest versions of the entities. However, this may cause problems with disambiguating older publications, where the authors may have used an older name variant to refer to the same organization.
 
 The data to train and evaluate the approaches for different tasks are derived from this main dataset. However, as each task has a different nature, some preprocessing and filtering is applied when necessary. 
-\newline
-\newline
-\textit{\textbf{Task-Adaptive Pretraining (TAPT):}} For Entity Linking in funding domain, the input text is the sentences where the authors acknowledge the funding support they had received for their research. As TAPT can be done with unlabelled data, 13 million such sentences are extracted from Scopus, where they are displayed for each article. Using the identifiers of the articles, the sentences belonging to the articles in Validation$^1$, Validation$^2$ and Test splits are removed.
-\newline
-\newline
-\textit{\textbf{Named Entity Recognition (NER):}} As mentioned in Section \ref{sec:NERMEThod}, IOB tagging is used to train and evaluate the NER models. In the dataset used for this work, the annotations are not done in terms of tokens, but in terms of character spans of the input text. That is, each gold mention is provided using their character offsets with respect to the article text. Hence, first the input text is tokenized and the labels are assigned to tokens based on some predefined rules to tackle some edge cases that mostly correspond to annotation errors. These rules are extracted based on empirical results to maximize the correctness of the annotations. The experiments were done on a portion of the training set, and all the edge cases found were present for less than $0.5\%$ of the investigated dataset. In Appendix \ref{app:NERPrepro} you may find the details of the labelling step. 
+%\newline
+%\newline
+%\textit{\textbf{Task-Adaptive Pretraining %(TAPT):}}
+\subsubsection{Task-Adaptive Pretraining (TAPT)}
+For AL in funding domain, the input text is the sentences where the authors acknowledge the funding support they had received for their research. As TAPT can be done with unlabelled data, 13 million such sentences are extracted from Scopus, where they are displayed for each article. Using the identifiers of the articles, the sentences belonging to the articles in Validation$^1$, Validation$^2$ and Test splits are removed.
+%\newline
+%\newline
+%\textit{\textbf{Named Entity Recognition (NER):}}
+\subsubsection{Named Entity Recognition (NER)}
+As mentioned in Section \ref{sec:NERMEThod}, IOB tagging is used to train and evaluate the NER models. In the dataset used for this work, the annotations are not done in terms of tokens, but in terms of character spans of the input text. That is, each gold mention is provided using their character offsets with respect to the article text. Hence, first the input text is tokenized and the labels are assigned to tokens based on some predefined rules to tackle some edge cases that mostly correspond to annotation errors. These rules are extracted based on empirical results to maximize the correctness of the annotations. The experiments were done on a portion of the training set, and all the edge cases found were present for less than $0.5\%$ of the investigated dataset. In Appendix \ref{app:NERPrepro} the details of the labeling step can be found.
 
 \begin{table}[h!]
     \centering
@@ -544,20 +561,22 @@ The data to train and evaluate the approaches for different tasks are derived fr
     \label{tab:goldstatsner}
 \end{table}
 
-The NER component should extract the mentions of organizations only if they funded the corresponded research. For this purpose, the classifier developed by Elsevier is used as a preprocessing step. This classifier identifies whether a sentence contains funding information or not. As the NER component will directly work with this classifier, as a preprocessing step, the dataset splits are reduced to the sentences that are identified as positive by this classifier. The second column of Table \ref{tab:goldstatsner} shows the number of articles with at least one sentence with funding information for each dataset split, and the third column shows the total number of such sentences. Furthermore, the number of organization and grant mentions on each split can be found in the fourth and fifth columns respectively. In Figure \ref{fig:nerdatalen} you may find the distribution of number of characters for the sentences and mentions contained in the Training and Validation$^1$ splits.
+The NER component should extract the mentions of organizations only if they funded the corresponded research. For this purpose, the classifier developed by Elsevier is used as a preprocessing step. This classifier identifies whether a sentence contains funding information or not. As the NER component will directly work with this classifier, as a preprocessing step, the dataset splits are reduced to the sentences that are identified as positive by this classifier. The second column of Table \ref{tab:goldstatsner} shows the number of articles with at least one sentence with funding information for each dataset split, and the third column shows the total number of such sentences. Furthermore, the number of organization and grant mentions on each split can be found in the fourth and fifth columns respectively. In Figure \ref{fig:nerdatalen}, the distribution of number of characters for the sentences and mentions contained in the Training and Validation$^1$ splits are presented.
 
 
-\begin{figure}[h!]
+\begin{figure}
     \centering
     \includegraphics[scale=0.45]{grant_lens.png}
     \includegraphics[scale=0.45]{org_lens.png}
     \includegraphics[scale=0.45]{sentence_lens.png}
     \includegraphics[scale=0.45]{sentence_tokens.png}
-    \caption{Distribution of length of grant mentions (top-left), organization mentions (top-right), sentences (bottom-left) in terms of number of characters and distribution of number of tokens per sentence (bottom-right). Plots are cut over the x-axis, and the maximum x values are 75, 223, 9175 and 2760 respectively. Statistics obtained from Training and Validation$^1$ splits.}
+    \caption{Distribution of length of grant mentions (top-left), organization mentions (top-right), sentences (bottom-left) in terms of number of characters and distribution of number of tokens per sentence (bottom-right). Plots are cut over the x-axis, and the maximum x values are 75, 223, 9175 and 2760 respectively.}
     \label{fig:nerdatalen}
 \end{figure}
 
-\noindent \textit{\textbf{Entity Disambiguation (ED):}} For this task, the whole dataset is used. Table \ref{tab:goldstatsed} displays the statistics for each dataset split. The second column of this table shows number of articles with at least one organization mention for each split. It can be seen that not all organization mentions have a corresponding entity in the KR. These mentions will be referred to as NIL mentions. A mention being NIL means that a funding organization is extracted by the annotators, however, as this organization was not yet included in the KR, it was not linked. Because of this, all NIL mentions for this task can be classified as emerging entities (EE). These are very important for this work, as the current KR is being updated regularly consulting to the detected EEs.
+%\noindent \textit{\textbf{Entity Disambiguation (ED):}} 
+\subsubsection{Entity Disambiguation (ED)}
+For this task, the whole dataset is used. Table \ref{tab:goldstatsed} displays the statistics for each dataset split. The second column of this table shows number of articles with at least one organization mention. It also can be seen that not all organization mentions have a corresponding entity in the KR. These mentions will be referred to as NIL mentions. A mention being NIL means that a funding organization is extracted by the annotators, however, as this organization was not yet included in the KR, it was not linked. Because of this, all NIL mentions for this task can be classified as emerging entities (EE). These are very important for this work, as the current KR is being updated regularly consulting to the detected EEs.
 
 \begin{table}[h!]
     \centering
@@ -573,12 +592,12 @@ The NER component should extract the mentions of organizations only if they fund
     \label{tab:goldstatsed}
 \end{table}
 
-Another interesting property of this dataset is that only the entities belonging to a small part of the KR appear as a link, as can be seen from Table \ref{tab:goldstatsed2}. For example, only 26.6\% of the entities in the KR appear as a link in the Training split. In addition, the  Validation$^1$, Validation$^2$ and Test splits contain links to entities that do not appear in the Training split. However, when  Table \ref{tab:goldstatsed3} is investigated, it is possible to see that such instances are long-tail entities. For example, even though 28.9\% of the unique entities in the Test split do not appear in the Training split; when the overall number of links are checked, only 5.14\% of the links are to these entities. Nevertheless, it is important that the ED system can link mentions of unseen entities correctly as well.
+Another interesting property of this dataset is that only the entities belonging to a small part of the KR appear as a link, as can be seen from Table \ref{tab:goldstatsed2}. For example, only 26.9\% of the entities in the KR appear as a link in the Training split. In addition, the  Validation$^1$, Validation$^2$ and Test splits contain links to entities that do not appear in the Training split. However, when  Table \ref{tab:goldstatsed3} is investigated, it is possible to see that such instances are long-tail entities. For example, even though 28.1\% of the unique entities in the Test split do not appear in the Training split; when the overall number of links are checked, only 5.14\% of the links are to these entities. Nevertheless, it is important that the ED system can link mentions of unseen entities correctly as well.
 
 
 Figure \ref{fig:entpopul} shows the number of occurrences of the top 25 most frequent entities on Training and Validation$^1$ splits. It can be seen that the distribution is highly skewed, even with the most common entities. 
 
-\begin{table}[h!]
+\begin{table}
     \centering
     \begin{tabular}{cccc}
     Dataset Split & \# Unique Entities & Overlap with Training & KR Coverage\\
@@ -588,11 +607,11 @@ Figure \ref{fig:entpopul} shows the number of occurrences of the top 25 most fre
     Validation$^2$ & 2,658 & 81.6\% & 9.88\%\\
     Test & 5,590 & 71.91\%& 20.79\%\\
     \end{tabular}
-    \caption{Dataset splits and number of unique entities in each split. Third column indicates the percentage of unique entities that are also present in the Training split for Validation$^1$, Validation$^2$ and Test splits. The last column shows the percentage of Knowledge Repository covered by each split.}
+    \caption{Dataset splits and number of unique entities in each split. Third column indicates the percentage of unique entities that are also present in the Training split for Validation$^1$, Validation$^2$ and Test splits. The last column shows the percentage of KR covered by each split.}
     \label{tab:goldstatsed2}
 \end{table}
 
-\begin{table}[h!]
+\begin{table}
     \centering
     \begin{tabular}{ccc}
     Dataset Split & \# Links & Links not in Training\\
@@ -613,7 +632,9 @@ Figure \ref{fig:entpopul} shows the number of occurrences of the top 25 most fre
 \end{figure}
 
 
-\noindent \textit{\textbf{Entity Linking (EL):}} In this work no end-to-end EL system is trained as the task of EL is tackled in two-steps, NER and ED. Hence, the data described is used to evaluate the end-to-end performance of an NER and an ED system put together. 
+%\noindent \textit{\textbf{Entity Linking (EL):}} 
+\subsubsection{Entity Linking (EL)}
+In this work no end-to-end EL system is trained as the task of EL is tackled in two-steps, NER and ED. Hence, the data described is used to evaluate the end-to-end performance of an NER and an ED system put together. 
 
 As the NER is also evaluated here implicitly, the Sentence classifier is used again to limit the dataset to the sentences detected by this classifier, as done for the NER task dataset. Also, all the NIL mentions are classified as emerging entities, due to the same reason reported for the ED task dataset. In fact, the dataset for EL is a subset of that of ED, limited by the sentence classifier. Tables \ref{tab:goldstatsel}, \ref{tab:goldstatsel2} and \ref{tab:goldstatsel3} show statistics of the dataset splits such as number of mentions, links and percentage of NIL mentions.
 
@@ -640,7 +661,7 @@ As the NER is also evaluated here implicitly, the Sentence classifier is used ag
     Validation$^2$ & 2,302 & 83.36\% & 8.57\%\\
     Test & 4,350 & 76\%& 16.18\%\\
     \end{tabular}
-    \caption{Dataset splits and number of unique entities in each split. Third column indicates the percentage of unique entities that are also present in the Training split. The entities in the Training split is determined using the dataset for the ED task. The last column shows the percentage of Knowledge Repository covered by each split.}
+    \caption{Dataset splits and number of unique entities in each split. Third column indicates the percentage of unique entities that are also present in the Training split. The entities in the Training split is determined using the dataset for the ED task. The last column shows the percentage of KR covered by each split.}
     \label{tab:goldstatsel2}
 \end{table}
 
@@ -660,97 +681,119 @@ As the NER is also evaluated here implicitly, the Sentence classifier is used ag
 \subsection{Evaluation Metrics}
 \label{sec:EvalExpSetupEval}
 Each different problem tackled in this work is evaluated with a suitable metric selected from the literature.
-\newline
-\newline
-\textit{\textbf{Task-Adaptive Pretraining (TAPT):}} To evaluate BERT$_{SC}$ and monitor its progress, Perplexity is used. This metric corresponds to the inverse probability of the dataset based on the model \cite{perplexity}, and it it is the most popular metric to evaluate language models \cite{perplexity}. 
-\newline
-\newline
-\textit{\textbf{Named Entity Recognition (NER):}} To evaluate the Named Entity Recognition task, precision recall and F1 scores are used for each entity type, Organization and Grant. These metrics are defined in terms of True Positives (TP), False Positives (FP) and False Negatives (FN). Precision is defined as the fraction of TPs among all mentions extracted by the system, and recall is defined as the fraction TPs among all ground truth mentions. F1 score is the harmonic mean of precision and recall metrics. A mention is considered to be a TP if and only if both the extracted span and type information is correct. A FP corresponds to a mention that is extracted by the system wrongly, and a FN corresponds to a mention that is not extracted by the system while being present in the ground truth. This scheme is chosen as it is inline with evaluation of the CoNLL-2003 NER task \cite{conll}.
-\newline
-\newline
-\textit{\textbf{Entity Linking (EL):}} To evaluate the EL task, a strategy inspired by GERBIL \cite{gerbil} is used. GERBIL is a framework for evaluating various entity-related tasks, such as NER, ED and EL. The framework supports many popular databases, hence, systems evaluating on such datasets can use it when they provide an API support. However, since this work is using a domain-specific and private dataset, it is not possible to make use of it directly. Hence, the metrics are reimplemented consulting the paper \cite{gerbil} and the GitHub repository\footnote{\url{https://github.com/dice-group/gerbil}}. 
-
-GERBIL offers various settings to evaluate systems. In this work, ``Normal'', ``EE'' (Emerging Entities) and ``InKB'' (In Knowledge Base) settings are used for evaluation and the results for each are reported separately. 
-
-To calculate the scores in ``Normal'' setting, for each document, the true positive (tp), false positive (fp) and false negative (fn) instances are counted. First, for each gold annotation, a matching annotation is looked for in predictions. Two annotations are considered to be matching based on strict criteria. If a match is found, this counts as a tp. Gold annotations for which no match is found are counted as fn. Similarly, the predictions that were not marked as a match for any gold annotation are counted as fp. If a prediction is marked as a match for a gold annotation, it could not be matched again. And, a gold annotation could not be matched with more than one prediction. After obtaining the tp, fp and fn counts; precision, recall and F1-score for that document are calculated. The precision, recall and F1-score for all the documents are averaged to produce macro averaged results. To obtain micro averaged results; the tp, fp and fn counts of all documents are summed together before calculating precision, recall and F1-score. Equations \ref{eq:pr}, \ref{eq:re}, \ref{eq:f1} show the calculation of scores from tp, fp and fn counts.
+%\newline
+%\newline
+%\textit{\textbf{Task-Adaptive Pretraining (TAPT):}} 
+\subsubsection{Task-Adaptive Pretraining (TAPT)}
+To evaluate BERT$_{SC}$ and monitor its progress, Perplexity is used. This metric corresponds to the inverse probability of the dataset based on the model \cite{perplexity}, and it it is the most popular metric to evaluate language models \cite{perplexity}. 
+%\newline
+%\newline
+%\textit{\textbf{Named Entity Recognition (NER):}}
+\subsubsection{Named Entity Recognition (NER)}
+To evaluate the NER task, precision recall and F1 scores are used for each entity type, Organization and Grant. These metrics are defined in terms of True Positives (TP), False Positives (FP) and False Negatives (FN). Precision is defined as the fraction of TPs among all mentions extracted by the system, and recall is defined as the fraction TPs among all ground truth mentions. F1 score is the harmonic mean of precision and recall metrics. The formulas of these metrics are shown in Equations \ref{eq:pr},\ref{eq:re} and \ref{eq:f1}. A mention is considered to be a TP if and only if both the extracted span and type information is correct. A FP corresponds to a mention that is extracted by the system wrongly, and a FN corresponds to a mention that is not extracted by the system while being present in the ground truth. This scheme is chosen as it is inline with evaluation of the CoNLL-2003 NER task \cite{conll}.
 
 \begin{equation}
 \label{eq:pr}
-    \text{Precision} = \frac{\#tp}{\#tp+\#fp} 
+    \text{Precision} = \frac{\#TP}{\#TP+\#FP} 
 \end{equation}
 \begin{equation}
 \label{eq:re}
-    \text{Recall} = \frac{\#tp}{\#tp+\#fn} 
+    \text{Recall} = \frac{\#TP}{\#TP+\#FN} 
 \end{equation}
 \begin{equation}
 \label{eq:f1}
     \text{F1 Score} = \frac{2\cdot\text{Precision}\cdot\text{Recall}}{\text{Precision}+\text{Recall}} 
 \end{equation}
 
-GERBIL distinguishes NIL mentions to two, emerging entities and ones where the system cannot produce a link. In this work, for the ED task, it is known that all NIL mentions are emerging entities, and the systems developed are not able to make such distinction between NIL mentions. Hence, for the EL task, the mentions extracted by the NER components are also assumed to be emerging entities, even though this may not always be the case. Based on this assumption, to get the scores for the ``EE'' setting, the tp counts are discarded when the annotations both contained an entity that is in the KR. The gold annotations that were not matched with any prediction did not count as fn if the entity was in the KR. Similarly, the predictions that were not matched did not count as fp if the entity was in the KR. For the ``InKB'' setting, the tp counts are discarded when the entities were both NIL. The gold annotations that were not matched with any prediction did not count as fn if the entity was NIL. And, the predictions that were not matched did not count as fp if the entity was NIL.
-\newline
-\newline
-\textit{\textbf{Entity Disambiguation (ED):}} To evaluate the ED systems, the metrics introduced in \cite{NILMentions} is used. This paper has a similar ``InKB'' and ``EE'' setting with GERBIL. They do not have a ``Normal'' setting, however, they report micro and macro averaged accuracy over the whole samples. In the ``InKB'' and ``EE'' setting, the metrics used are precision, recall and F1 score. In this work, the reason why accuracy is reported in ``Normal'' setting is that, since all NIL mentions are assumed to be emerging entities, precision and recall becomes the same according to GERBIL. Different from \cite{NILMentions}, in the ``EE'' and ``InKB'' settings, micro averaged results are calculated instead of macro. 
+%\newline
+%\newline
+%\textit{\textbf{Entity Linking (EL):}} 
+\subsubsection{Entity Linking (EL)}
+To evaluate the EL task, a strategy inspired by GERBIL \cite{gerbil} is used. GERBIL is a framework for evaluating various entity-related tasks, such as NER, ED and EL. The framework supports many popular databases, hence, systems evaluating on such datasets can use it when they provide an API support. However, since this work is using a domain-specific and private dataset, it is not possible to make use of it directly. Hence, the metrics are reimplemented consulting the paper \cite{gerbil} and the GitHub repository\footnote{\url{https://github.com/dice-group/gerbil}}. 
+
+GERBIL offers various settings to evaluate systems. In this work, ``Normal'', ``EE'' (Emerging Entities) and ``InKB'' (In Knowledge Base) settings are used for evaluation and the results for each are reported separately. 
+
+To calculate the scores in ``Normal'' setting, for each document, the TP, FP and FN instances are counted. First, for each gold annotation, a matching annotation is looked for in predictions. Two annotations are considered to be matching based on strict criteria. If a match is found, this counts as a TP. Gold annotations for which no match is found are counted as FN. Similarly, the predictions that were not marked as a match for any gold annotation are counted as FP. If a prediction is marked as a match for a gold annotation, it could not be matched again. And, a gold annotation could not be matched with more than one prediction. After obtaining the TP, FP and FN counts; precision, recall and F1 score for that document are calculated. The precision, recall and F1-score for all the documents are averaged to produce macro averaged results. To obtain micro averaged results; the TP, FP and FN counts of all documents are summed together before calculating precision, recall and F1 score. 
+
+GERBIL distinguishes NIL mentions to two, emerging entities and ones where the system cannot produce a link. In this work, for the ED task, it is known that all NIL mentions are emerging entities, and the systems developed are not able to make such distinction between NIL mentions. Hence, for the EL task, the mentions extracted by the NER components are also assumed to be emerging entities, even though this may not always be the case. Based on this assumption, to get the scores for the ``EE'' setting, the TP counts are discarded when the annotations both contained an entity that is in the KR. The gold annotations that were not matched with any prediction did not count as FN if the entity was in the KR. Similarly, the predictions that were not matched did not count as FP if the entity was in the KR. For the ``InKB'' setting, the TP counts are discarded when the entities were both NIL. The gold annotations that were not matched with any prediction did not count as FN if the entity was NIL. And, the predictions that were not matched did not count as FP if the entity was NIL.
+%\newline
+%\newline
+%\textit{\textbf{Entity Disambiguation (ED):}}
+\subsubsection{Entity Disambiguation (ED)}
+To evaluate the ED systems, the metrics introduced in \cite{NILMentions} is used. This paper has a similar ``InKB'' and ``EE'' setting with GERBIL. They do not have a ``Normal'' setting, however, they report micro and macro averaged accuracy over the whole samples. In the ``InKB'' and ``EE'' setting, the metrics used are precision, recall and F1 score. In this work, the reason why accuracy is reported in ``Normal'' setting is that, since all NIL mentions are assumed to be emerging entities, precision and recall becomes the same according to GERBIL. Different from \cite{NILMentions}, in the ``EE'' and ``InKB'' settings, micro averaged results are calculated instead of macro. 
 
 
 \subsection{Training, Hyperparameters and Implementation}
 \label{sec:EvalExpSetupTraining}
-\todo{I thought of putting this section to 'Approach' chapter but then the evaluation metrics are not defined yet}
-To conduct the experiments, first, the models introduced in Chapter \ref{chapter:Approach} are trained and implemented. For training, the Training split prepared for that specific task is used for each model. The details for all the models are explained below.
-\newline
-\newline
-\textit{\textbf{BERT}}$_{SC}$\textit{\textbf{:}}
+\todo{I thought of putting this section to Approach chapter but then the evaluation metrics are not defined yet}
+To conduct the experiments, the models introduced in Chapter \ref{chapter:Approach} are trained and implemented. For training, the Training split prepared for that specific task is used for each model. The details for all the models are explained below.
+%\newline
+%\newline
+%\textit{\textbf{BERT}}$_{SC}$\textit{\textbf{:}}
+\subsubsection{BERT$_{SC}$}
 The weights of BERT$_{SC}$ are first initialized with the case-preserving version of BERT$_{BASE}$. Following TAPT, the model is trained end-to-end with the sentences extracted from Scopus, using Masked Language Modeling (MLM). The choice of a case-preserving model is due to the fact that case information can provide important information to the NER task, for example, it is common in English to capitalize organization names. The implementation is based on the GitHub repository of the paper where TAPT was introduced\footnote{\url{https://github.com/allenai/dont-stop-pretraining}} \cite{DontStop}. Throughout training, the progress is monitored on Validation$^1$. The hyperparameters recommended by \cite{DontStop} is used as much as possible. Number of epochs are reduced from the recommended number (100) to 2 as the training set is rather large. It is thought that 1 epoch would be sufficient, and a second epoch would be beneficial to see whether Validation$^1$ scores would improve with more epochs or not. The batch size is set to 4 due to memory requirements, but using gradient accumulation, an effective batch size of 2048 is maintained as recommended. 
 
-However, the initial setup to train BERT$_{SC}$ could not be performed. According to the initial setup, TAPT was going to be performed for around 13,500 steps for 2 epochs. However, it was observed that after 2 days of training, only 1000 steps were finished, and hence, only around 2 million training examples were utilized. Due to the time constraints, it was determined to stop the training at that point. After 1000 steps, a perplexity of 2.8612 is achieved on the Validation$^1$ set. Figure \ref{fig:perp} shows the change of perplexity on Validation$^1$, recorded every 20 training steps. Based on this plot, we believe that it is possible to obtain a model with higher performance when the training with the full dataset is completed. However, this is left to future work.
+However, the initial setup to train BERT$_{SC}$ could not be performed. According to the initial setup, TAPT was going to be performed for around 13,500 steps in 2 epochs. However, after 2 days of training it was observed that only 1000 steps were finished, and hence, only around 2 million training examples were utilized. Due to the time constraints, it was determined to stop the training at that point. 
+
+After 1000 steps, a perplexity of 2.86 is achieved on the Validation$^1$ set. Figure \ref{fig:perp} shows the change of perplexity on Validation$^1$, recorded every 20 training steps. Based on this plot, we believe that it is possible to obtain a model with higher performance when the training with the full dataset is completed. However, this is left to future work.
 
 The training of BERT$_{SC}$ is done on an NVIDIA Tesla K80 GPU with 12 GB of memory. More details on the hyperparameter configuration can be found in Appendix \ref{sec:app:bertsc}.
 
-\begin{figure}[H]
+\begin{figure}
     \centering
     \includegraphics[scale=0.7]{perpplot.png}
     \caption{Perplexity on Validation$^1$ during training}
     \label{fig:perp}
 \end{figure}
 
-\noindent \textit{\textbf{Flair}}$^{NER}$\textit{\textbf{:}} The implementation of Flair$^{NER}$ is done using the Flair library \cite{flairlib}. In this library, both $LSTM^{forward}_{Flair}$ and $LSTM^{backward}_{Flair}$ trained on the 1 billion word corpus \cite{onebillion} are available. Using these and pretrained GloVe embeddings, the BiLSTM-CRF model is trained on the Training split and the progress is monitored on Validation$^1$ split using the training interface of Flair.  Mainly, the hyperparameters and training strategy reported in \cite{flairpaper} is followed, while changing minor things to address the computational limitations. The batch size was set to 8 and the model started training with a learning rate of 0.1. When for 2 epochs, no improvement on the Validation$^1$ split was observed, the learning rate was halved. The training is stopped when no improvement was made in a certain learning rate, amounting to 37 epochs in total. The performance on Validation$^1$ was measured as micro-averaged F1 score of the output tags. The models were saved at the end of each epoch, and the model that performed best on Validation$^1$ is selected. It was observed that the model at the end of 33 epochs was the best one. The losses, scores and learning rates per epoch are presented in Appendix \ref{sec:app:flairner}. One epoch of training Flair$^{NER}$ took approximately 50 minutes on an NVIDIA Quadro T1000 GPU with 4GB memory. 
-\newline
-\newline
-\textit{\textbf{BERT}}$^{NER}$\textit{\textbf{:}} All parameters of BERT$^{NER}$ are fine-tuned end-to-end with different hyperparameter settings. The progress of training is monitored on Validation$^1$ across epochs, with respect to the same evaluation metric of the NER task.
+%\noindent \textit{\textbf{Flair}}$^{NER}$\textit{\textbf{:}} 
+\subsubsection{Flair$^{NER}$}
+The implementation of Flair$^{NER}$ is done using the Flair library \cite{flairlib}. In this library, both $LSTM^{forward}_{Flair}$ and $LSTM^{backward}_{Flair}$ trained on the 1 billion word corpus \cite{onebillion} are available. Using these and pretrained GloVe embeddings, the BiLSTM-CRF model is trained on the Training split and the progress is monitored on Validation$^1$ split using the training interface of Flair.  Mainly, the hyperparameters and training strategy reported in \cite{flairpaper} is followed, while changing minor things to address the computational limitations. 
+
+A batch size of 8 is used, and the model started training with a learning rate of 0.1. When for 2 epochs, no improvement on the Validation$^1$ split was observed, the learning rate was halved. The training is stopped when no improvement was made in a certain learning rate, amounting to 37 epochs in total. The performance on Validation$^1$ was measured as micro averaged F1 score of the output tags. The models were saved at the end of each epoch, and the model that performed best on Validation$^1$ is selected. It was observed that the model at the end of 33 epochs was the best one. The losses, scores and learning rates per epoch are presented in Appendix \ref{sec:app:flairner}. One epoch of training Flair$^{NER}$ took approximately 50 minutes on an NVIDIA Quadro T1000 GPU with 4GB memory. 
+%\newline
+%\newline
+%\textit{\textbf{BERT}}$^{NER}$\textit{\textbf{:}} 
+\subsubsection{BERT$^{NER}$}
+All parameters of BERT$^{NER}$ are fine-tuned end-to-end with different hyperparameter settings. The progress of training is monitored on Validation$^1$ across epochs, with respect to the same evaluation metric of the NER task.
 
 Devlin et al. (2019) \cite{BERT} suggested different hyperparameter settings for fine-tuning BERT: a batch size of 16 or 32, learning rate of $5\times10^{-5}$, $3\times10^{-5}$ or $2\times10^{-5}$; and training for 2, 3 or 4 epochs. Due to memory requirements, the batch size is set to 8. Then, the model is trained for 10 epochs with a learning rate of $2\times10^{-5}$, while saving the model at the end of each epoch. On top of that, 3 more models are trained using a linear learning rate scheduler for 2, 3 and 4 epochs respectively. The number of warmup steps is set to 50. For implementation, the library Transformers \cite{huggingface} by Hugging Face\footnote{\url{https://huggingface.co/}} is used.
 
 After the experimentation with different hyperparameter settings, it was decided that training for 3 epochs with a linear learning rate scheduler produced the best results. Appendix \ref{sec:app:bertner} shows detailed results on this experimentation.
 
 BERT$^{NER}$ can process a maximum of 512 tokens per input, similar to BERT$_{BASE}$. Hence, the sentences having more tokens are split into smaller chunks, such that there is no overlap between chunks and no word is scattered across chunks. Later on, the predictions are merged as a postprocessing step. The training is done using an NVIDIA Tesla K80 GPU with 12 GB of memory. On this device, one epoch took approximately 1 hour. 
-\newline
-\newline
-\textit{\textbf{BERT}}$^{NER}_{SC}$\textit{\textbf{:}} BERT$^{NER}_{SC}$ is trained with the exact same hyperparameter settings that produced the best results for BERT$^{NER}$, i.e. for 3 epochs with a linear learning rate scheduler.
+%\newline
+%\newline
+%\textit{\textbf{BERT}}$^{NER}_{SC}$\textit{\textbf{:}} 
+\subsubsection{BERT$^{NER}_{SC}$}
+BERT$^{NER}_{SC}$ is trained with the exact same hyperparameter settings that produced the best results for BERT$^{NER}$, i.e. for 3 epochs with a linear learning rate scheduler.
 
-One aim of this study is also showing the effect of domain adaptation. This will be done by comparing BERT$^{NER}$ and BERT$^{NER}_{SC}$. To be able to show that the improvement gained by pretraining is not random, a second BERT$^{NER}_{SC}$ is trained with the second-best hyperparameter setting, for 2 epochs with a linear learning rate scheduler. However, the aim of this second BERT$^{NER}_{SC}$ is just for observing the effect of domain adaptation, not for measuring the success of any other task. Hence, when BERT$^{NER}_{SC}$ is referred to in any other setting, it is the one trained for 3 epochs.
+One aim of this study is showing the effect of domain adaptation, which is achieved by comparing BERT$^{NER}$ and BERT$^{NER}_{SC}$. To be able to show that the improvement gained by pretraining is not random, a second BERT$^{NER}_{SC}$ is trained with the second-best hyperparameter setting, for 2 epochs with a linear learning rate scheduler. However, the aim of this second BERT$^{NER}_{SC}$ is just for observing the effect of domain adaptation, not for measuring the success of any other task. Hence, when BERT$^{NER}_{SC}$ is referred to in any other setting, it is the one trained for 3 epochs.
 
 BERT$^{NER}_{SC}$ can also process a maximum of 512 tokens, and is also trained on the same GPU with BERT$^{NER}$. One epoch of training took approximately 1 hour.
-\newline
-\newline
-\textit{\textbf{Biencoder}}$_{B}$\textit{\textbf{:}} The implementation of Biencoder$_{B}$ was inspired by its GitHub repository\footnote{\url{https://github.com/facebookresearch/BLINK/tree/master/blink}}. Mainly, the code for data preprocessing was obtained from this repository. The models and training was implemented using PyTorch \cite{pytorch} and Transformers library by Hugging Face.
+%\newline
+%\newline
+%\textit{\textbf{Biencoder}}$_{B}$\textit{\textbf{:}} 
+\subsubsection{Biencoder$_{B}$}
+The implementation of Biencoder$_{B}$ is inspired by BLINK's GitHub repository\footnote{\url{https://github.com/facebookresearch/BLINK/tree/master/blink}}. Mainly, the code for data preprocessing is obtained from this repository. The models and training are implemented using PyTorch \cite{pytorch} and Transformers library by Hugging Face.
 
 As there was no computational power to be able to do an extensive hyperparameter search, the values reported by \cite{scalablezeroshot} is followed as much as possible. In BLINK, the maximum number of tokens for the mention representation ($R_{Mention}$) are either 32 or 128, depending on the dataset. This number is set to 64 in this work. Originally it was planned to set it to 32 to address the memory limitations, however, it was observed that there were mentions longer than 32 tokens themselves.
 
-For candidate representation ($R_{Candidate}$), BLINK uses 128 tokens. However, in this setting, there are candidates that have longer representations. To be more specific, there are 96 entities with representation longer than 128 tokens, 36 entities longer than 256 tokens, and 23 entities longer than 256. Hence, for the 96 entities that had longer representations, a label is removed iteratively until the representation was equal to or shorter than 128 tokens. The label that had the highest sorted Levenshtein distance with any other label is removed in each iteration, as it was thought that this label would be the least informative.
+For candidate representation ($R_{Entity}$), BLINK uses 128 tokens. However, in this setting, there are candidates that have longer representations. To be more specific, there are 96 entities with representation longer than 128 tokens, 36 entities longer than 256 tokens, and 23 entities longer than 256. Hence, for the 96 entities that had longer representations, a label is removed iteratively until the representation was equal to or shorter than 128 tokens. The label that had the highest sorted Levenshtein distance with any other label is removed in each iteration, as it was thought that this label would be the least informative.
 
-BLINK uses a batch size of 128, and adds 10 hard negatives (Neg$_H$=10) among these in-batch negatives. Hence, for a mention, they make use of a maximum of 127 random negatives and a maximum of 137 negatives in total ($max(|IE|)=127+10=137$). As the training is done on a GPU with 12 GB memory, this batch size could not be maintained in terms of random negatives. Hence, the hyperparameters are scaled down proportionally. It was observed that a maximum batch size of 16 was possible. Proportionally, Neg$_H$ is set to 1, making $max(|IE|)=15+1=16$.
+BLINK uses a batch size of 128, and adds 10 hard negatives (Neg$_H$=10) among the in-batch negatives. Hence, for a mention, they make use of a maximum of 127 random negatives, and a maximum of 137 negatives in total ($max(|IE|)=127+10=137$). As the training is done on a GPU with 12 GB memory, this batch size could not be maintained in terms of random negatives. Hence, the hyperparameters are scaled down proportionally. It was observed that a maximum batch size of 16 was possible. Proportionally, Neg$_H$ is set to 1, making $max(|IE|)=15+1=16$.
 
-Even though a batch size of 128 cannot be maintained in terms of in-batch random negatives, it is possible to maintain this number in terms of gradient updating using gradient accumulation. Initially, the batch size was set to be inline with BLINK. Similarly, the learning rate was set to $10^{-5}$. However, no learning was observed with this setting. We hypothesize that it is because of the size of the dataset. At the end, the batch size was set to 64 using gradient accumulation and the learning rate was set to $2 \times 10^{-5}$, which is also the minimum learning rate recommended by \cite{BERT}.
+Even though a batch size of 128 cannot be maintained in terms of in-batch random negatives, it is possible to maintain this number in terms of gradient updating using gradient accumulation. Initially, the batch size was set to be inline with BLINK. Similarly, the learning rate was set to $10^{-5}$. However, no learning was observed with this setting. We hypothesize that it is because of the size of the dataset. At the end, the batch size is set to 64 using gradient accumulation and the learning rate is set to $2 \times 10^{-5}$, which is also the minimum learning rate recommended by \cite{BERT}.
 
 The models in BLINK are trained for either 4 or 5 epochs. It is not clear whether the hard negative sampling is done for each epoch or not. However, as they report that they are following the strategy of \cite{googleintern}, it will be assumed that one epoch corresponds to one round for this case. Based on this, initially, it was thought to have 4 rounds of training, each consisting of 1 epoch. No hard negatives are added in the first round, as some weights of the model are initialized randomly anyway. To observe the course of training and the change in performance after each round, Validation$^1$ is used.
 
 Table \ref{tab:biencoderbres} shows the performance of Biencoder$_B$ on Training and Validation$^1$ sets after the first two rounds. It can be seen that after the second round, the performance drops further for the InKB setting but improves for the EE setting, resulting in an overall performance decline as shown with accuracy. We hypothesize that the second round of training resulted in better separation of the scores of NIL and not-NIL mentions, however, did not improve the model in terms of finding the correct entity. 
 
 
-\begin{table}[H]
+\begin{table}
     \centering
     \begin{tabular}{cccc}
-    &&Micro-Averaged & Macro-Averaged\\
+    &&Micro Averaged & Macro Averaged\\
     Round    & Dataset & Accuracy &Accuracy \\
     \hline
     1  & Training & 61.88&62.9\\
@@ -783,9 +826,9 @@ Table \ref{tab:biencoderbres} shows the performance of Biencoder$_B$ on Training
     \label{tab:biencoderbres}
 \end{table}
 
-To see the separation between NIL-mentions and non-NIL mentions, it is possible to model the distribution of scores. For this purpose, two normal distributions are fit on the normalized scores (see Section \ref{sec:biencoderbexplanation} for details of the normalization) of the highest ranked entity for each mention, one for NIL-mentions and one for others. The parameters of the distribution are calculated using Maximum Likelihood and Validation$^1$ dataset, and are shown in Table \ref{tab:nilnotnilBparams}. Figure \ref{fig:biencoderbnil} shows the histogram of scores for each distribution. When the Bhattacharyya distance  \cite{bhatt} is checked, it is possible to see that the distribution of NIL-mention scores are more different than the other mentions in Round 2, compared to Round 1. The choice of this metric is due to the fact that it is reported as a convenient metric to measure the class separability of normal distributions \cite{bhatt}.
+To see the separation between NIL mentions and non-NIL mentions, it is possible to model the distribution of scores. For this purpose, two normal distributions are fit on the normalized scores (see Section \ref{sec:biencoderbexplanation} for details of the normalization) of the highest ranked entity for each mention, one for NIL mentions and one for others. The parameters of the distribution are calculated using Maximum Likelihood and Validation$^1$ dataset, and are shown in Table \ref{tab:nilnotnilBparams}. Figure \ref{fig:biencoderbnil} shows the histogram of scores for each distribution. When the Bhattacharyya distance  \cite{bhatt} is checked, it is possible to see that the distribution of NIL mention scores are more different than the other mentions in Round 2, compared to Round 1. The choice of this metric is due to the fact that it is reported as a convenient metric to measure the class separability of normal distributions \cite{bhatt}.
 
-\begin{table}[H]
+\begin{table}
     \centering
     \begin{tabular}{c|cc|cc|c}
     & \multicolumn{2}{c|}{NIL Mentions} & \multicolumn{2}{c|}{Other Mentions} & Bhattacharyya\\
@@ -798,7 +841,7 @@ To see the separation between NIL-mentions and non-NIL mentions, it is possible 
     \label{tab:nilnotnilBparams}
 \end{table}
 
-\begin{figure}[H]
+\begin{figure}
     \centering
     \includegraphics[scale=0.5]{biencoderbnil.png}
     \caption{Distribution of scores for Biencoder$_B$, first two rounds, on Validation$^1$.}
@@ -806,9 +849,11 @@ To see the separation between NIL-mentions and non-NIL mentions, it is possible 
 \end{figure}
 
 Based on the results, the training of Biencoder$_B$ is stopped after two rounds, and was not used any further. The training of the first round took 1.3 and the second round took 1.7 hours in the NVIDIA Tesla K80 GPU with 12 GB of memory.
-\newline
-\newline
-\textit{\textbf{Biencoder}}$_{ADPT}$\textit{\textbf{:}} To train Biencoder$_{ADPT}$, the same batch size and learning rate with that of Biencoder$_{B}$ is used. The progress of the training is also monitored using the Validation$^1$ split. 
+%\newline
+%\newline
+%\textit{\textbf{Biencoder}}$_{ADPT}$\textit{\textbf{:}} 
+\subsubsection{Biencoder$_{ADPT}$}
+To train Biencoder$_{ADPT}$, the same batch size and learning rate with that of Biencoder$_{B}$ is used. The progress of the training is also monitored using the Validation$^1$ split. 
 
 The model is trained for 4 rounds, each consisting of one epoch. The initial round of training is done just with random negatives, and Neg$_R$ is set to 3. This hyperparameter is not tuned as there is not much performance improvement expected from the initial round. It could be that a higher Neg$_R$ leads to a better result, however, the training time would also increase accordingly. In the following rounds, Neg$_H$ is set to 10, as BLINK also uses 10 hard negatives. Based on the formula introduced in Section \ref{sec:biencoderadaptexplanation}, Neg$_R$ is set to 3, 2 and 2 for the second, third and fourth rounds respectively. Also, in the initial round, class weights are used for loss calculation to prevent the model to predict everything as the negative class. According to the random negative sampling strategy, a weight of 0.25 is given to the negative class and 0.75 is given to the positive class. However, class weights are not used in the following rounds, even though the class imbalance continues. During training, it was seen that not using class weights was slightly better for the performance. This could be because in these rounds the negative samples are selected with hard negative mining, and hence are very informative.
 
@@ -849,14 +894,14 @@ Table \ref{tab:hardnegsbiencoder1} (upper) shows the number of hard negatives fo
 \end{table}
 
 
-As a second set of hyperparameters, it was tried to train each round for 2 epochs instead of one. Also, the maximum tokens for $R_{Candidate}$ is set to 256. It was thought that a longer representation would be better in the event that new entities would have many labels. The number was not increased to 512, in case the Cross-Encoder of BLINK \cite{scalablezeroshot} would be implemented later on. A separate experiment to see the effect of this increase to the performance was not conducted as the impacted entities cover 2.42 \% of Training, 2.3 \% of Validation$^1$, 2.41 \% of Validation$^2$ and 2.66 \% of Test split for the ED task. There were 1037 samples in Validation$^2$ split for which Biencoder$_{ADPT}$ made a mistake when trained with the first hyperparameter configuration, but got the correct answer when trained with the second hyperparameter configuration. Among these samples, in only 10 of them, the correct entity was affected by this change. Lastly, as the entity embeddings are precomputed before inference, this increase does not have any impact on the efficiency.
+As a second set of hyperparameters, it was tried to train each round for 2 epochs instead of one. Also, the maximum tokens for $R_{Entity}$ is set to 256. It was thought that a longer representation would be better in the event that new entities would have many labels. The number was not increased to 512, in case the Cross-Encoder of BLINK \cite{scalablezeroshot} would be implemented later on. A separate experiment to see the effect of this increase to the performance was not conducted as the impacted entities cover 2.42 \% of Training, 2.3 \% of Validation$^1$, 2.41 \% of Validation$^2$ and 2.66 \% of Test split for the ED task. There were 1037 samples in Validation$^2$ split for which Biencoder$_{ADPT}$ made a mistake when trained with the first hyperparameter configuration, but got the correct answer when trained with the second hyperparameter configuration. Among these samples, in only 10 of them, the correct entity was affected by this change. Lastly, as the entity embeddings are precomputed before inference, this increase does not have any impact on the efficiency.
 
-Apart from number of epochs per round and the maximum tokens for $R_{Candidate}$, the other hyperparameters were not changed. During training, following the formula, Neg$_R$ is set to 2 for second, third and fourth rounds. In this setting, the training took around 11, 15, 13.5 and 14 hours for the first, second, third and fourth rounds respectively; using the NVIDIA Tesla K80 GPU with 12 GB of memory.
+Apart from number of epochs per round and the maximum tokens for $R_{Entity}$, the other hyperparameters were not changed. During training, following the formula, Neg$_R$ is set to 2 for second, third and fourth rounds. In this setting, the training took around 11, 15, 13.5 and 14 hours for the first, second, third and fourth rounds respectively; using the NVIDIA Tesla K80 GPU with 12 GB of memory.
 
-\begin{table}[H]
+\begin{table}
     \centering
     \begin{tabular}{cccc}
-    &&Micro-Averaged & Macro-Averaged\\
+    &&Micro Averaged & Macro Averaged\\
     Setting & Threshold     & Accuracy &Accuracy \\
     \hline
     1  & 0.5&83.85&87.3\\
@@ -890,18 +935,73 @@ Apart from number of epochs per round and the maximum tokens for $R_{Candidate}$
 
 Table \ref{tab:hardnegsbiencoder1} (lower) shows the number of hard negatives for the second configuration and Table \ref{tab:biencoderadaptres} shows the results on Validation$^2$ for both hyperparameter settings. Even though a score of 0.5 is a natural threshold for NIL mention detection as the problem is cast as binary classification, a threshold that maximizes the micro averaged accuracy is selected on the Training split using grid search in the interval [0.5,1] with a step size of 0.001. 
 
-It is possible to see that there are more mentions with no hard negatives in general for the second set of hyperparameters. Moreover, all the scores are higher on Validation$^2$ when the second hyperparameters are used. That is why, it was decided to use the model that is trained for 2 epochs per round and that has a maximum $R_{Candidate}$ of 256.
+It is possible to see that there are more mentions with no hard negatives in general for the second set of hyperparameters. Moreover, all the scores are higher on Validation$^2$ when the second hyperparameters are used. That is why, it was decided to use the model that is trained for 2 epochs per round and that has a maximum $R_{Entity}$ of 256.
 
 An interesting observation is, a threshold selection is beneficial for NIL mention detection, which is shown by the EE evaluation setting. This could indicate that the models do not have a full capability of detecting NIL mentions themselves. 
 
 Appendix \ref{sec:app:biencoderadapt} presents more results on Training and Validation$^1$ splits for each round of training.
+%\newline
+%\newline
+%\textbf{\textit{Reranker}}$_K$:
+\subsubsection{Reranker$_K$}
+Before training the model, the number of candidates are selected using Validation$^1$ based on the best Biencoder$_{ADPT}$. First, top 20 predicted entities are extracted for each non-NIL mention in the dataset. Then, the coverage of each rank is calculated as the number of mentions for which the correct entity is extracted within that rank divided by the number of non-NIL mentions. Table \ref{tab:coverageestimation} shows the coverage of each rank and how much the coverage increase between ranks. The upper figure next to the table plots the coverage over ranks, and the lower figure zooms into a smaller area of the same plot. Red dots indicate the selected $K$ values.
+
+Using the data presented, two values are selected, $K=4$ and $K=12$. The former is selected as the curve looks to be flattened after that value, and the latter is selected as the coverage does not increase for more than 0.1\% in the following ranks.
+
+\begin{table}
+
+	\begin{minipage}{0.5\linewidth}
+	\centering
+	\begin{tabular}{c|cc}
+    K  & Coverage & Increase \\
+    \hline
+    1   & 91.68\% & - \\
+    2   & 95.43\% & +3.75 \%\\
+    3   & 96.21\% & +0.78 \%\\
+    4   & 96.48\% & +0.27 \%\\
+    5   & 96.63\% & +0.15 \%\\
+    6   & 96.86\% & +0.23 \%\\
+    7   & 97.09\% & +0.23 \%\\
+    8   & 97.26\% & +0.17 \%\\
+    9   & 97.39\% & +0.13 \%\\
+    10  & 97.45\% & +0.06 \%\\
+    11  & 97.52\% & +0.06 \%\\
+    12  & 97.66\% & +0.15 \%\\
+    13  & 97.73\% & +0.06 \%\\
+    14  & 97.81\% & +0.08 \%\\
+    15  & 97.83\% & +0.02 \%\\
+    16  & 97.85\% & +0.02 \%\\
+    17  & 97.85\% & +0.0  \%\\
+    18  & 97.87\% & +0.02 \%\\
+    19  & 97.89\% & +0.02 \%\\
+    20  & 97.98\% & +0.08 \%\\
+    \end{tabular}
+	\end{minipage}\hfill
+	\begin{minipage}{0.5\linewidth}
+		\centering
+		\includegraphics[scale=0.5]{candplot.png}
+		\includegraphics[scale=0.5]{candplotzoom.png}
+	\end{minipage}
+	\caption{Coverage estimation for each rank on Validation$^1$ split}
+	\label{tab:coverageestimation}
+\end{table}
+
+The hyperparameter search and the feature selection is conducted separately for each of these $K$ values. The best configuration is chosen based on micro averaged accuracy when the NIL mention detection threshold is 0.5. For $K=12$, the best feature set included all features, the L$_1$ penalty ratio is set to 0.5 and the regularization strength is set to 10. For $K=4$, the best feature set was the one where popularity was not used. The L$_1$ penalty ratio and the regularization strength stayed the same. Figure \ref{fig:rerankercoef} shows the magnitude of coefficients for Reranker$_{12}$. A NIL mention detection threshold is selected on the interval [0.5,1] using grid search with a step size of 0.001 that maximizes the micro averaged accuracy on Training split. Surprisingly, the best threshold remained to be 0.5.
+
+\begin{figure}
+    \centering
+    \includegraphics[scale=0.5]{rerankercoef.png}
+    \caption{The magnitude of coefficients for Reranker$_{12}$. Score of CS refers to the score obtained from Biencoder$_{ADPT}$.}
+    \label{fig:rerankercoef}
+\end{figure}
 
 \section{Results}
 \label{sec:EvalResults}
-The results for NER, ED and EL are presented in this section. Different approaches are compared on the Validation$^2$ splits, and the best performing appraoch is compared with Elsevier's baseline in that task on the Test split.
-\newline
-\newline
-\textit{\textbf{Named Entity Recognition (NER) and Task-Adaptive Pretraining (TAPT):}}
+The results for NER, ED and EL are presented in this section. Different approaches are compared on the Validation$^2$ splits, and the best performing approach is compared with Elsevier's baseline in that task on the Test split.
+%\newline
+%\newline
+%\textit{\textbf{Named Entity Recognition (NER) and Task-Adaptive Pretraining (TAPT):}}
+\subsubsection{Named Entity Recognition (NER) and Task-Adaptive Pretraining (TAPT)}
 To compare the developed NER models, the current NER component of Elsevier, which is based on Stanford NER \cite{stanfordNER},  is used as a baseline.
 
 \begin{table}
@@ -925,9 +1025,9 @@ To compare the developed NER models, the current NER component of Elsevier, whic
 
 Table \ref{tab:all_ner_results} compares the precision, recall and F1 scores for Organization and Grant mentions on Validation$^2$ dataset. It can be seen that all models perform well on extracting grant mentions, while Flair$^{NER}$ obtains the highest F1 score with a small difference. In contrast, using neural language models improve the performance on Organization mentions with a large margin, resulting in a minimum absolute increase of 7.4 points in terms of F1.
 
-BERT$^{NER}$ sligtly outperforms Flair$^{NER}$ in terms of Organization F1-score by an increase of 0.7 points. However, the main difference is the precision and recall values. Flair$^{NER}$ achieves a precision that is 6.6 points higher than that of BERT$^{NER}$, while BERT$^{NER}$ achieves a recall that is 8 points higher. In funding data extraction, for NER component, a higher recall is preferred in this study as if a mention is missed completely, there is nothing that can be done about it.
+BERT$^{NER}$ sligtly outperforms Flair$^{NER}$ in terms of Organization F1 score by an increase of 0.7 points. However, the main difference is the precision and recall values. Flair$^{NER}$ achieves a precision that is 6.6 points higher than that of BERT$^{NER}$, while BERT$^{NER}$ achieves a recall that is 8 points higher. In funding data extraction, for NER component, a higher recall is preferred in this study as if a mention is missed completely, there is nothing that can be done about it.
 
-BERT$^{NER}_{SC}$ improves upon BERT$^{NER}$ further, showing the importance of domain adaptation. When trained with the exact same setup, it is possible to see an improvement of 1 points in precision and 0.5 points in recall. To show that this was not a coincidence, Table \ref{tab:bertsccompareother} shows the performance of BERT$^{NER}$ and BERT$^{NER}_{SC}$ trained for 2 epochs with a learning rate scheduler on the Validation$^2$ split. It can be seen that domain adaptation improves the performance on this hyperparameter setting as well.
+BERT$^{NER}_{SC}$ improves upon BERT$^{NER}$ further, showing the importance of domain adaptation. When trained with the exact same setup, it is possible to see an improvement of 1 points in precision and 0.5 points in recall. To show that this was not a coincidence, Table \ref{tab:bertsccompareother} shows the performance of BERT$^{NER}$ and BERT$^{NER}_{SC}$ on the Validation$^2$ split, when trained for 2 epochs with a learning rate scheduler. It can be seen that domain adaptation improves the performance on this hyperparameter setting as well.
 
 \begin{table}
     \centering
@@ -960,73 +1060,85 @@ BERT$^{NER}_{SC}$ improves upon BERT$^{NER}$ further, showing the importance of 
 \end{table}
 
 At the end, it is decided to use BERT$^{NER}_{SC}$ as the NER component to extract mentions of funding bodies. Table \ref{tab:all_ner_results_test} compares the results of BERT$^{NER}_{SC}$ and Elsevier Baseline on the Test split. It is possible to see that the performance gain persists on the Test split as well. Hence, it is concluded that this work improved upon Elsevier's NER baseline by 2.9 points gain in precision, 12.4 points gain in recall and 7.6 points gain in F1 score.
-\newline
-\newline
-\noindent \textit{\textbf{Entity Disambiguation (ED):}} Table \ref{tab:edresultsval} shows the performance of the ED systems on Validation$^2$. Biencoder$_{ADPT}$ is the one that is trained with the best hyperparameters setting. The performance of Biencoder$_{ADPT}$ with a 0.5 threshold for NIL mention detection is reported, as this is the natural one given that ED is cast as binary classification. Also, another threshold that maximizes the micro averaged accuracy on Training split is selected by applying grid search in the interval [0.5,1] with a step size of 0.001. 
+%\newline
+%\newline
+%\noindent \textit{\textbf{Entity Disambiguation (ED):}} 
+\subsubsection{Entity Disambiguation (ED)}
+Table \ref{tab:edresultsval} shows the performance of the ED systems on Validation$^2$. Biencoder$_{ADPT}$ is the one that is trained with the best hyperparameter setting. The performance of Biencoder$_{ADPT}$ with a 0.5 threshold for NIL mention detection is reported, as this is the natural one given that ED is cast as binary classification. Also, another threshold that maximizes the micro averaged accuracy on Training split is selected by applying grid search in the interval [0.5,1] with a step size of 0.001. Both Reranker$_{4}$ and Reranker$_{12}$ uses the best Biencoder$_{ADPT}$ as candidate selector. 
 
-As a baseline, the ED system that is developed by Elsevier is used. On top of that, the performance of a system that is solely based on Commonness is reported. Commonness measures the maximum likelihood probability of an entity being the link to the given mention \cite{balog}. For a mention-entity pair, it is calculated as number of times that the mention was linked to the given entity, divided by the number of times that the mention appears as a link \cite{balog}. For this system, the commonness values are obtained using the Training split, and the mention is linked to the entity with which it has the highest commonness value. If a mention did not appear as a link in the Training split (and hence no commonness value is recorded), it is linked to NIL.
+As a baseline, the ED system that is developed by Elsevier is used. This system utilizes BM25 for candidate retrieval and a Gradient Boosted Decision Tree with hand-crafted features for reranking. On top of that, the performance of a system that is solely based on commonness is reported. For this system, the commonness values are obtained using the Training split, and the mention is linked to the entity with which it has the highest commonness value. If a mention did not appear as a link in the Training split (and hence no commonness value is recorded), it is linked to NIL.
 
 The results show that a threshold that is higher than 0.5 helps improving the performance of Biencoder$_{ADPT}$. However, even with this threshold, Elsevier's model outperforms Biencoder$_{ADPT}$ significantly. Also, even though it is highly simple, the Commonness baseline has surprisingly good results.
 
+It can be seen that an additional reranker improves the performance of Biencoder$_{ADPT}$ by 2 points, and performs only 0.5 points worse than Elsevier baseline in terms of micro averaged accuracy. Also, when the number of candidates is increased to 12, there is 0.5 points performance improvement, which is not negligible. Hence, it was decided that the best ED model that is developed is Reranker$_{12}$ that utilizes Biencoder$_{ADPT}$ as a candidate selector.
+
+Table \ref{tab:elresultstest} compares the performance of the best performing model and Elsevier baseline on Test split. It can be seen that Elsevier baseline outperforms the developed model on this dataset as well. However, the performance difference is lower in this setting, Elsevier baseline performing only 0.4 points higher in terms of micro averaged accuracy. It can be seen that this improvement comes from the ``EE'' setting, the developed model outperforms Elsevier's ED approach by 0.2 points in F1 score, while on Validation$^2$, Elsevier's system was performing 0.7 points higher than the new model. This could indicate a rather inconsistent behavior on NIL mention detection by both systems.
+
 \begin{table}
     \centering
-    \begin{tabular}{cccc}
-    &&Micro-Averaged & Macro-Averaged\\
+    \begin{tabular}{lccc}
+    &&Micro Averaged & Macro Averaged\\
     System    & Threshold & Accuracy &Accuracy \\
     \hline
     Biencoder$_{ADPT}$  & 0.5 & 86.95&89.9\\
     Biencoder$_{ADPT}$  & 0.728 & 88.44&90.75\\
+    Biencoder$_{ADPT}$ + Reranker$_{4}$ & 0.5 & 89.92& 91.77\\
+    Biencoder$_{ADPT}$ + Reranker$_{12}$ & 0.5 & 90.48 &92.22\\
     Commonness  & -  &83.8&85.81 \\
     Elsevier Baseline & - & 91.02&92.84\\
     \end{tabular}
     
-    \vspace{0.5cm}\begin{tabular}{ccccc}
+    \vspace{0.5cm}\begin{tabular}{lcccc}
     &&&EE Setting & \\
     System    & Threshold & Precision & Recall & F1-Score \\
     \hline
     Biencoder$_{ADPT}$  & 0.5 & 84.22& 58.97&	69.37\\
     Biencoder$_{ADPT}$  & 0.728 & 75.75& 76.27&	76.01\\
+    Biencoder$_{ADPT}$ + Reranker$_{4}$ & 0.5 & 69.9& 84.27& 76.42\\
+    Biencoder$_{ADPT}$ + Reranker$_{12}$ & 0.5 & 75.68& 80.85& 78.18\\
     Commonness  & -  &53.55& 88.2&	66.64 \\
     Elsevier Baseline & - &79.11& 78.67&	78.89 \\
     \end{tabular}
     
-    \vspace{0.5cm}\begin{tabular}{ccccc}
+    \vspace{0.5cm}\begin{tabular}{lcccc}
     &&&InKB Setting & \\
     System    & Threshold & Precision & Recall & F1-Score \\
     \hline
     Biencoder$_{ADPT}$  & 0.5 & 87.29&92.11&89.64\\
     Biencoder$_{ADPT}$  & 0.728 & 90.8&90.68&	90.74\\
+    Biencoder$_{ADPT}$ + Reranker$_{4}$ & 0.5 &   94.54& 90.96& 92.72\\
+    Biencoder$_{ADPT}$ + Reranker$_{12}$ & 0.5 & 93.43& 92.26& 92.84 \\
     Commonness  & - &94.22&82.99	&88.25 \\
     Elsevier Baseline & - & 93.2&93.29&	93.25\\
     \end{tabular}
-    
+       
     \caption{Performance comparison of different ED models on the Validation$^2$ split.}
     \label{tab:edresultsval}
 \end{table}
 
 \begin{table}
     \centering
-    \begin{tabular}{cccc}
-    &&Micro-Averaged & Macro-Averaged\\
+    \begin{tabular}{lccc}
+    &&Micro Averaged & Macro Averaged\\
     System    & Threshold & Accuracy &Accuracy \\
     \hline
-    Best  & ? & \\
+    Biencoder$_{ADPT}$ + Reranker$_{12}$  & 0.5 & 89.89 & 90.37\\
     Elsevier Baseline & - & 90.26&	90.84\\
     \end{tabular}
     
-    \vspace{0.5cm}\begin{tabular}{ccccc}
+    \vspace{0.5cm}\begin{tabular}{lcccc}
     &&&EE Setting & \\
     System    & Threshold & Precision & Recall & F1-Score \\
     \hline
-    Best  & ? & \\
+    Biencoder$_{ADPT}$ + Reranker$_{12}$  & 0.5 &  77.64 &84.62& 80.98\\
     Elsevier Baseline & - & 80.03&	81.49&	80.75\\
     \end{tabular}
     
-    \vspace{0.5cm}\begin{tabular}{ccccc}
+    \vspace{0.5cm}\begin{tabular}{lcccc}
     &&&InKB Setting & \\
     System    & Threshold & Precision & Recall & F1-Score \\
     \hline
-    Best  & ? & \\
+    Biencoder$_{ADPT}$ + Reranker$_{12}$  & 0.5 &  93.05 &91.11 &92.07\\
     Elsevier Baseline & - & 92.69&	92.3&	92.5\\
     \end{tabular}
     		
@@ -1034,16 +1146,119 @@ The results show that a threshold that is higher than 0.5 helps improving the pe
     \caption{Performance comparison of the best ED model developed and Elsevier baseline on Test split.}
     \label{tab:edresultstest}
 \end{table}
-Table \ref{tab:edresultstest} compares the performance of the best performing model (...) and the Elsevier baseline on Test split.\todo{after ED model selection}
-\newline
-\newline
-\noindent \textit{\textbf{Entity Linking (EL):}} Table \ref{tab:elresultsvalid} shows the end-to-end EL performance of different NER and ED systems combined. It can be seen that, in all settings, the performance is lower when the NER of Elsevier is used. It was on shown on Table \ref{tab:all_ner_results} that BERT$_{SC}^{NER}$ improves upon Elsevier baseline by 6.6 ,11.44 and 8.9 points in terms of precision, recall and F1 score of Organization mentions, on Validation$^2$ split. Table \ref{tab:elresultsvalid} shows that the EL performance of ED models have a similar performance increase in the ``Normal'' setting when BERT$_{SC}^{NER}$ is used for NER instead of Elsevier baseline. 
+
+
+%\noindent \textit{\textbf{Entity Linking (EL):}} 
+\subsubsection{Entity Linking (EL)}
+Table \ref{tab:elresultsvalid} shows the end-to-end EL performance of different NER and ED systems combined. It can be seen that, in all settings, the performance is lower when the NER of Elsevier is used. It was on shown on Table \ref{tab:all_ner_results} that BERT$_{SC}^{NER}$ improves upon Elsevier baseline by 6.6 ,11.44 and 8.9 points in terms of precision, recall and F1 score of Organization mentions, on Validation$^2$ split. Table \ref{tab:elresultsvalid} shows that the EL performance of ED models have a similar performance increase in the ``Normal'' setting when BERT$_{SC}^{NER}$ is used for NER instead of Elsevier baseline. 
 
 It can also be seen that the InKB performance is significantly higher than the performance on EEs. Hence, it can be hypothesized that improving NIL mention detection is something that should be worked on. In addition, in the InKB setting, the recall values are lower than precision, but this does not hold for the Normal setting. This may be caused by the sub-optimal NIL mention detection threshold as well, failing to generate the link to the correct entity when the assigned score is lower than the linear threshold.
 
-\begin{table}
+Even though the developed ED models do not perform better than the existing one, Table \ref{tab:elresultstest} shows that the best model pairing still improves upon Elsevier's current setting largely, attributed to the improvement achieved on NER. In terms of micro averaged accuracy, the new approach improves precision, recall and F1 score by 2.6, 11.4 and 6.9 points respectively. These gains are lower than the ones observed for Organization mentions for NER task, which is inline with the fact that Elsevier's ED model performs better.
+
+\begin{table}[H]
     \centering
-    \begin{tabular}{c|cccc}
+    \begin{tabular}{l l c c c| c c c}
+    \multicolumn{2}{l}{(``Normal'' Setting)}&\multicolumn{3}{c|}{Micro Averaged}&\multicolumn{3}{c}{Macro Averaged} \\
+    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
+    \hline
+    Els. Baseline & Els. Baseline & 69.83	&67.09&	68.43&	71.62&	69.24&	69.34
+\\
+    BERT$_{SC}^{NER}$ & Biencoder$_{ADPT}$ &72.45&78.5&75.35&75.78&78.37&76.24 \\
+    & + Reranker$_{12}$&\\
+    \end{tabular}
+    
+    \vspace{0.5cm}\begin{tabular}{l l c c c| c c c}
+    \multicolumn{2}{l}{(``EE'' Setting)}&\multicolumn{3}{c|}{Micro Averaged}&\multicolumn{3}{c}{Macro Averaged} \\
+    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
+    \hline
+    Els. Baseline & Els. Baseline & 45.93&	1.02&	43.34&	71.77&	71.07	&71.01
+\\
+    BERT$_{SC}^{NER}$ & Biencoder$_{ADPT}$ &49.85&54.65&52.14&73.14&73.63&72.98 \\
+    & + Reranker$_{12}$&\\
+    \end{tabular}
+    
+    \vspace{0.5cm}\begin{tabular}{l l c c c| c c c}
+    \multicolumn{2}{l}{(``InKB'' Setting)}&\multicolumn{3}{c|}{Micro Averaged}&\multicolumn{3}{c}{Macro Averaged} \\
+    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
+    \hline
+    Els. Baseline & Els. Baseline & 83.15&	72.26&	77.33&	78.05&	73.69&	74.73
+\\
+    BERT$_{SC}^{NER}$ & Biencoder$_{ADPT}$ & 86.42&83.23&84.8&82.78&81.8&81.49 \\
+    & + Reranker$_{12}$&\\
+    \end{tabular}
+    \caption{Comparison of EL performance of the best NER and ED models and the Elsevier baselines on the Test split.}
+    \label{tab:elresultstest}
+\end{table}
+
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l l c c c| c c c}
+    \multicolumn{2}{l}{(``Normal'' Setting)}&\multicolumn{3}{c|}{Micro Averaged}&\multicolumn{3}{c}{Macro Averaged} \\
+    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
+    \hline
+    Els. Baseline & Commonness & 63.41&64.96&64.18&72.45&70.14&	70.31\\
+    Els. Baseline & Els. Baseline & 67.92&69.57&68.74&76.74&74.28&	74.44\\
+    Els. Baseline & Biencoder$_{ADPT}$ &66.58&68.2&67.38&75.73&73.3&	73.46\\
+    %Els. Baseline  & + Reranker$_{4}$ &67.54&69.19&68.35&76.42&74.02&74.17\\
+    Els. Baseline  & + Reranker$_{12}$ &67.72&69.37&68.54&76.63&74.17&74.34\\
+    BERT$_{SC}^{NER}$ & Commonness & 69.48&75.26&72.25&75.82&78.3&	76.38\\
+    BERT$_{SC}^{NER}$ & Els. Baseline & 74.19&80.36&77.15&80.17&82.88&	80.79\\
+    BERT$_{SC}^{NER}$ & Biencoder$_{ADPT}$ &72.49&78.52&75.38&78.91&81.5&	79.5\\
+    %BERT$_{SC}^{NER}$ & + Reranker$_{4}$ &73.68&79.8&76.62&79.75&82.39&80.36\\
+    BERT$_{SC}^{NER}$ & + Reranker$_{12}$ & 73.94&	80.09&	76.89&	79.99&	82.64&	80.6\\
+    \end{tabular}
+    
+    \vspace{0.5cm}\begin{tabular}{l l c c c| c c c}
+    \multicolumn{2}{l}{(``EE'' Setting)}&\multicolumn{3}{c|}{Micro Averaged}&\multicolumn{3}{c}{Macro Averaged} \\
+    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
+    \hline
+    Els. Baseline & Commonness & 38.45&	45.82&41.81&	57.82&58.88&	57.78\\
+    Els. Baseline & Els. Baseline &51.52&	41.54&46	 & 71.29&70.34  & 70.32 \\
+    Els. Baseline & Biencoder$_{ADPT}$ &50.36&	39.47&44.26&	70.87&70.19&	70.09\\
+    %Els. Baseline  & + Reranker$_{4}$ &47.06&44.26&45.62&67.92&.67.82&67.42\\
+    Els. Baseline  & + Reranker$_{12}$ &48.82&41.89&45.09&69.83&69.35&69.15\\
+    BERT$_{SC}^{NER}$ & Commonness & 45.67&	58.5&51.3&	62.43&64.48&	62.84\\
+    BERT$_{SC}^{NER}$ & Els. Baseline &56.07&	53.8&54.91&	73.38&73.53&	72.97 \\
+    BERT$_{SC}^{NER}$ & Biencoder$_{ADPT}$ &56.6&	49.78&52.97&	74.39&74.26&	73.85\\
+    %BERT$_{SC}^{NER}$ & + Reranker$_{4}$ &53.32&56.17&54.71&71.65&72.54&71.57\\
+    BERT$_{SC}^{NER}$ & + Reranker$_{12}$ & 55.22&53.41&54.3&73.48&73.84&73.16\\
+    \end{tabular}
+    
+    \vspace{0.5cm}\begin{tabular}{l l c c c| c c c}
+    \multicolumn{2}{l}{(``InKB'' Setting)}&\multicolumn{3}{c|}{Micro Averaged}&\multicolumn{3}{c}{Macro Averaged} \\
+    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
+    \hline
+    Els. Baseline & Commonness & 89.87	&68.14&	77.51&	85.1	&72.47&	76.41\\
+    Els. Baseline & Els. Baseline & 87.16	&74.23&	80.17	&83.38	&77.86&	79.3\\
+    Els. Baseline & Biencoder$_{ADPT}$ &86.36	&72.98&	79.11&	82.5	&76.88&	78.37\\
+    %Els. Baseline  & + Reranker$_{4}$ &88.5&73.33&80.2&84.68&77.22&79.41\\
+    Els. Baseline  & + Reranker$_{12}$ &87.59&73.94&80.19&83.75&77.56&79.3\\ 
+    BERT$_{SC}^{NER}$ & Commonness & 90.62	&78.04&	83.86	&87.69	&80.26&	82.5\\
+    BERT$_{SC}^{NER}$ & Els. Baseline & 89.31	&84.77&	86.98	&86.99	&86.06&	85.72\\
+    BERT$_{SC}^{NER}$ & Biencoder$_{ADPT}$ &88.24	&83.29&	85.7	&85.52	&84.79&	84.37\\
+    %BERT$_{SC}^{NER}$ & + Reranker$_{4}$ &90.15&83.73&86.82&87.68&85.2&85.54\\
+    BERT$_{SC}^{NER}$ & + Reranker$_{12}$ &89.48&84.53&86.93&86.9&85.67&85.51\\
+    \end{tabular}
+    \caption{EL performance of different NER-ED model pairs on the Validation$^2$ split. NIL detection for Biencoder$_{ADPT}$ performed with the threshold 0.728.}
+    \label{tab:elresultsvalid}
+\end{table}
+
+
+
+
+
+
+%\noindent \textbf{\textit{Efficiency:}}
+\subsubsection{Efficiency}
+The runtime of the best developed NER and ED component, BERT$_{SC}^{NER}$ and Reranker$_{12}$ utilizing Biencoder$_{ADPT}$, is measured on a random sample of 100 sentences from the Validation$^1$ split. First, BERT$_{SC}^{NER}$ is executed on the input to detect the mentions. Then, Biencoder$_{ADPT}$ is executed on the detected Organization mentions (306 in total) to retrieve 12 candidates for each. On these 12 candidates, Reranker$_{12}$ is ran to select the highest scoring entity, and NIL mention detection is performed. Table \ref{tab:efficiencystats} shows some statistics of this subsample.
+
+The experiment is repeated 10 times on a laptop that has an Intel Xeon E-2276M (2.80GHz, 32GB RAM) CPU and an NVIDIA Quadro T1000 GPU with 4GB memory. The average and standard deviation runtime calculated from this experiment are shown in Table \ref{tab:efficiencyresults}. It is possible to see that, BERT$_{SC}^{NER}$ can process 39 sentences and Reranker$_{12}$ can link 32 mentions per second with this hardware. When Biencoder$_{ADPT}$ is ran without Reranker$_{12}$, 34 mentions can be linked per second.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{l|cccc}
     &  Mean & Std. & Min. & Max.\\
     \hline
     Sentence Length (in characters) &  229 & 126 & 65 & 919\\
@@ -1054,224 +1269,181 @@ It can also be seen that the InKB performance is significantly higher than the p
     \label{tab:efficiencystats}
 \end{table}
 
-\begin{table}
+\begin{table}[H]
     \centering
-    \begin{tabular}{c|cc}
+    \begin{tabular}{l|cc}
     System   & With GPU & Without GPU  \\
     \hline
     BERT$_{SC}^{NER}$  & $2.55 \pm 0.14$ & $16.61 \pm 1.58$\\
-    ?  & \\
+    Biencoder$_{ADPT}$ & $8.93 \pm $ 0.33 & $23.96 \pm 1.56$\\
+    %Biencoder$_{ADPT}$ + Reranker$_{4}$ & $9.23 \pm 0.3$ & $23.92 \pm 1.15$\\
+    Biencoder$_{ADPT}$ + Reranker$_{12}$ & $9.57 \pm 0.31$ &$25.38 \pm 1.51$\\
     \end{tabular}
     \caption{Mean and standard deviation runtime (in seconds) for 100 sentences and 306 ORG mentions, measured with and without GPU.}
     \label{tab:efficiencyresults}
 \end{table}
 
-\begin{table}
-    \centering
-    \begin{tabular}{c c c c c| c c c}
-    \multicolumn{2}{l}{(``Normal'' Setting)}&\multicolumn{3}{c|}{Micro-Averaged}&\multicolumn{3}{c}{Macro-Averaged} \\
-    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
-    \hline
-    Els. Baseline & Commonness & 63.41&64.96&64.18&72.45&70.14&	70.31\\
-    Els. Baseline & Els. Baseline & 67.92&69.57&68.74&76.74&74.28&	74.44\\
-    Els. Baseline & Biencoder$_{ADPT}$ &66.58&68.2&67.38&75.73&73.3&	73.46\\
-    BERT$_{SC}^{NER}$ & Commonness & 69.48&75.26&72.25&75.82&78.3&	76.38\\
-    BERT$_{SC}^{NER}$ & Els. Baseline & 74.19&80.36&77.15&80.17&82.88&	80.79\\
-    BERT$_{SC}^{NER}$ & Biencoder$_{ADPT}$ &72.49&78.52&75.38&78.91&81.5&	79.5\\
-    \end{tabular}
-    
-    \vspace{0.5cm}\begin{tabular}{c c c c c| c c c}
-    \multicolumn{2}{l}{(``EE'' Setting)}&\multicolumn{3}{c|}{Micro-Averaged}&\multicolumn{3}{c}{Macro-Averaged} \\
-    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
-    \hline
-    Els. Baseline & Commonness & 38.45&	45.82&41.81&	57.82&58.88&	57.78\\
-    Els. Baseline & Els. Baseline &51.52&	41.54&46	 & 71.29&70.34  & 70.32 \\
-    Els. Baseline & Biencoder$_{ADPT}$ &50.36&	39.47&44.26&	70.87&70.19&	70.09\\
-    BERT$_{SC}^{NER}$ & Commonness & 45.67&	58.5&51.3&	62.43&64.48&	62.84\\
-    BERT$_{SC}^{NER}$ & Els. Baseline &56.07&	53.8&54.91&	73.38&73.53&	72.97 \\
-    BERT$_{SC}^{NER}$ & Biencoder$_{ADPT}$ &56.6&	49.78&52.97&	74.39&74.26&	73.85\\
-    \end{tabular}
-    
-    \vspace{0.5cm}\begin{tabular}{c c c c c| c c c}
-    \multicolumn{2}{l}{(``InKB'' Setting)}&\multicolumn{3}{c|}{Micro-Averaged}&\multicolumn{3}{c}{Macro-Averaged} \\
-    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
-    \hline
-    Els. Baseline & Commonness & 89.87	&68.14&	77.51&	85.1	&72.47&	76.41\\
-    Els. Baseline & Els. Baseline & 87.16	&74.23&	80.17	&83.38	&77.86&	79.3\\
-    Els. Baseline & Biencoder$_{ADPT}$ &86.36	&72.98&	79.11&	82.5	&76.88&	78.37\\
-    BERT$_{SC}^{NER}$ & Commonness & 90.62	&78.04&	83.86	&87.69	&80.26&	82.5\\
-    BERT$_{SC}^{NER}$ & Els. Baseline & 89.31	&84.77&	86.98	&86.99	&86.06&	85.72\\
-    BERT$_{SC}^{NER}$ & Biencoder$_{ADPT}$ &88.24	&83.29&	85.7	&85.52	&84.79&	84.37\\
-    \end{tabular}
-    \caption{EL performance of different NER-ED model pairs on the Validation$^2$ split. NIL detection for Biencoder$_{ADPT}$ performed with the threshold 0.728.}
-    \label{tab:elresultsvalid}
-\end{table}
-
-
-\begin{table}
-    \centering
-    \begin{tabular}{c c c c c| c c c}
-    \multicolumn{2}{l}{(``Normal'' Setting)}&\multicolumn{3}{c|}{Micro-Averaged}&\multicolumn{3}{c}{Macro-Averaged} \\
-    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
-    \hline
-    Els. Baseline & Els. Baseline & 69.83	&67.09&	68.43&	71.62&	69.24&	69.34
-\\
-    BERT$_{SC}^{NER}$ & ? & \\
-    \end{tabular}
-    
-    \vspace{0.5cm}\begin{tabular}{c c c c c| c c c}
-    \multicolumn{2}{l}{(``EE'' Setting)}&\multicolumn{3}{c|}{Micro-Averaged}&\multicolumn{3}{c}{Macro-Averaged} \\
-    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
-    \hline
-    Els. Baseline & Els. Baseline & 45.93&	1.02&	43.34&	71.77&	71.07	&71.01
-\\
-    BERT$_{SC}^{NER}$ & ? & \\
-    \end{tabular}
-    
-    \vspace{0.5cm}\begin{tabular}{c c c c c| c c c}
-    \multicolumn{2}{l}{(``InKB'' Setting)}&\multicolumn{3}{c|}{Micro-Averaged}&\multicolumn{3}{c}{Macro-Averaged} \\
-    NER & ED &Precision&Recall&F1&Precision&Recall&F1\\
-    \hline
-    Els. Baseline & Els. Baseline & 83.15&	72.26&	77.33&	78.05&	73.69&	74.73
-\\
-    BERT$_{SC}^{NER}$ & ? & \\
-    \end{tabular}
-    \caption{Comparison of EL performance of the best NER and ED models and the Elsevier baselines on the Test split.}
-    \label{tab:elresultstest}
-\end{table}
-
-
-Table \ref{tab:elresultstest} compares the performance of the best performing model (...) and the Elsevier baseline on Test split. \todo{after ED model selection}
-\newline
-\newline
-\noindent \textbf{\textit{Efficiency:}} The runtime of the best developed NER and ED component, BERT$_{SC}^{NER}$ and \textcolor{red}{X}, is measured on a random sample of 100 sentences from the Validation$^1$ split. First, BERT$_{SC}^{NER}$ is executed on the input to detect the mentions. Then, \textcolor{red}{X} is executed on the detected Organization mentions (306 in total) to perform disambiguation. Table \ref{tab:efficiencystats} shows some statistics of this subsample.
-
-The experiment is repeated 10 times on a laptop that has an Intel Xeon E-2276M (2.80GHz, 32GB RAM) CPU and an NVIDIA Quadro T1000 GPU with 4GB memory. The average and standard deviation runtime calculated from this experiment are shown in Table \ref{tab:efficiencyresults}. \todo{after ED model selection}
-    
-
-\newpage
 \section{Analysis}
 \label{sec:EvalAnalysis}
-%"What do these results mean (according to the objectives you have set)? Can you identify success and failure cases? Clear take-home messages."
 
 The results obtained after the experiments give important insights on using the systems that work well in general domain for funding domain. 
 
 \subsubsection{Task-Adaptive Pretraining}
-Following the advice of the recent literature \textcolor{red}{\cite{}}, it was decided to perform domain adaptation on BERT$_{BASE}$, producing BERT$_{SC}$. For this purpose, the Task-Adaptive Pretraining (TAPT) strategy proposed by \cite{DontStop} is used. 
 
+It is possible to see that the TAPT schema was successful in terms of domain adaptation for this work. At the end of TAPT, a perplexity of 2.86 is achieved on Validation$^1$, which is lower than that of BERT$_{BASE}$ reported on its held-out set \cite{BERT}. Also, based on the perplexity plot on Validation$^1$ shown in Figure \ref{fig:perp}, we hypothesize that it is possible to see even further improvement when the training proceeds.
 
-\begin{itemize}
-    \item At the end of training, a perplexity of 2.86 is achieved on Validation$^1$, which is lower than that of BERT$_{BASE}$ reported on its held-out set \cite{BERT}.
-    \item Based on the perplexity plot on Validation$^1$ shown in Figure \ref{fig:perp}, we hypothesize that it is possible to see further improvement when the training proceeds.
-    \item To show the effectiveness of pretraining, two sets of BERT$^{NER}_{SC}$ models are trained, one with the best and one with the second-best hyperparameter combination observed on BERT$^{NER}$. \begin{itemize}
-        \item For the best hyperparameter setting, Table \ref{tab:all_ner_results} shows that BERT$^{NER}_{SC}$ improves upon BERT$^{NER}$ with respect to all evaluation metrics. The biggest increase comes from the precision of ORG mentions, with an improvement of 1.1 points. Even though there is normally a tradeoff between precision and recall, it can be seen that the recall of Organization mentions also increase by 0.5 points, showing a nice improvement. 
-        \item The results with the second-best hyperparameter setting also show improvement when BERT$^{NER}_{SC}$ is used. In this setting, the precision of Organization mentions is improved by 1.1 points and the recall by 0.8 points, showing a similar trend with the best hyperparameter setting.
-        \item We believe that this improvement is not just because of a longer training. In Appendix \ref{sec:app:bertner}, it is shown that no significant performance increase is observed when BERT$^{NER}$ is trained for more epochs.  
-    \end{itemize}
+To show the effectiveness of domain adaptation, two sets of BERT$^{NER}_{SC}$ models were trained, one with the best and one with the second-best hyperparameter combination observed on BERT$^{NER}$. For the best hyperparameter setting, Table \ref{tab:all_ner_results} shows that BERT$^{NER}_{SC}$ improves upon BERT$^{NER}$ with respect to all evaluation metrics. The biggest increase comes from the precision of ORG mentions, with an improvement of 1.1 points. Even though there is normally a tradeoff between precision and recall, it can be seen that the recall of Organization mentions also increase by 0.5 points, showing a nice improvement. The results with the second-best hyperparameter setting also show improvement when BERT$^{NER}_{SC}$ is used. In this setting, the precision of Organization mentions is improved by 1.1 points and the recall by 0.8 points, showing a similar trend with the best hyperparameter setting. Moreover, we believe that this improvement is not just because of a longer training. In Appendix \ref{sec:app:bertner}, it is shown that no significant performance increase is observed when BERT$^{NER}$ is trained for more epochs. In the light of these observations, we conclude that domain adaptation was beneficial for this work. 
 
-    \item Lastly, some sentences were randomly sampled from Validation$^2$, where BERT$^{NER}_{SC}$ performed better than BERT$^{NER}$ and were investigated manually to see whether there is a trend. In some cases, it was observed that BERT$^{NER}_{SC}$ was better at determining mention boundaries when there were adjacent organizations or organizations with a name that is fairly long. However, no error pattern was extracted confidently. \\ \todo{Can I put these here, do I need citation?}
-    \begin{itemize}
-        \item \textbf{\textit{Sentence:}} ``MG was funded by grants from Cancer Research UK, Prostate Cancer UK, the Prostate Cancer Foundation, the Royal Marsden NIHR Biomedical Research Centre for Cancer and the Wellcome Trust''\\
-        \textbf{\textit{Correct:}} ``Royal Marsden NIHR Biomedical Research Centre for Cancer''\footnote{\url{https://www.cancerbrc.org/}}\\
-        \textbf{\textit{BERT}}$^{NER}$: ``Royal Marsden'' and ``NIHR Biomedical Research Centre for Cancer''
-        \item \textbf{\textit{Sentence:}} ``The provision of genotyping data was supported in part by the National Center for Advancing Translational Sciences, CTSI grant UL1TR000124, and the National Institute of Diabetes and Digestive and Kidney Disease Diabetes Research Center (DRC) grant DK063491 to the Southern California Diabetes Endocrinology Research Center.'' \\
-         \newline
-        \textbf{\textit{Correct:}} ``National Institute of Diabetes and Digestive and Kidney Disease''\footnote{\url{https://www.niddk.nih.gov/}} and ``Diabetes Research Center''\footnote{\url{https://www.joslin.org/research/diabetes-research-center}} \\
-        \textbf{\textit{BERT}}$^{NER}$: ``National Institute of Diabetes and Digestive and Kidney Disease Diabetes Research Center''\\
-    \end{itemize}
-\end{itemize}
+Lastly, some sentences were randomly sampled from Validation$^2$, where BERT$^{NER}_{SC}$ performed better than BERT$^{NER}$ and were investigated manually to see whether there is a trend. In some cases, it was observed that BERT$^{NER}_{SC}$ was better at determining mention boundaries when there were adjacent organizations or organizations with a name that is fairly long. However, no error pattern was extracted confidently.
+\newline
+\begin{center}
+\fbox{
+    \begin{minipage}{0.8\linewidth}
+    ``MG was funded by grants from Cancer Research UK, Prostate Cancer UK, the Prostate Cancer Foundation, the \underline{Royal Marsden NIHR Biomedical Research Centre for Cancer} and the Wellcome Trust''\footnote{doi:10.1016/B978-0-12-800206-3.00024-0}\\
+    \textbf{BERT}$^{NER}$: ``Royal Marsden'' and ``NIHR Biomedical Research Centre for Cancer''
+    \\
+    \\
+    ``The provision of genotyping data was supported in part by the National Center for Advancing Translational Sciences, CTSI grant UL1TR000124, and the \underline{National Institute of Diabetes and Digestive and Kidney Disease}$_1$ \underline{Diabetes Research Center (DRC)}$_2$ grant DK063491 to the Southern California Diabetes Endocrinology Research Center.''\\
+    \textbf{BERT}$^{NER}$: ``National Institute of Diabetes and Digestive and Kidney Disease Diabetes Research Center''\footnote{doi:10.1038/s41397-018-0021-9}
+    \end{minipage}
+}\captionof{figure}{Some instances where BERT$^{NER}$ makes an error while BERT$_{SC}^{NER}$ does not. Underlined strings are the gold annotations, and adjacent gold mentions are enumerated.}
+\end{center}
+
 \subsubsection{NER for Extracting Grant and Funder Mentions}
-For extracting the mentions of funding organizations and their respective grant numbers, Flair$^{NER}$, BERT$^{NER}$ and BERT$^{NER}_{SC}$ are trained were compared.
-\begin{itemize}
-    \item First thing that can be noticed from Table \ref{tab:all_ner_results} is that Elsevier's baseline already has a high performance for Grant mentions. Hence, for those it may be unnecessary to switch from a linear model to a neural model. However, grant mentions are an important part of funding information extraction, and it is better to have a single model that can handle both types of mentions. Moreover, some performance improvement still takes place. When a neural model is used, a minimum gain of 1.6 points is observed in terms of F1-score for Grant mentions.
-    
-    The performance on Grant mentions for BERT$^{NER}$  further shows the ability of BERT to understand patterns even though they are not necessarily included in its WordPiece vocabulary as a single word. Grant numbers are usually combinations of letters, numbers and symbols such as ``-'', and hence are separated in a fine-grained way by the WordPiece tokenizer.  Still, BERT is able to infer that other combinations of letters and numbers are also probably grant mentions, even though that specific combination was not encountered by the model before.
-    
-    \item Another interesting trend that can be seen from Table \ref{tab:all_ner_results} is that while BERT$^{NER}$ and Flair$^{NER}$ do not have an immense difference in terms of F1 Score for Organization mentions, BERT$_{NER}$ has a much stronger recall and Flair$^{NER}$ has a much stronger precision. In this work, recall is favored over precision, as there is no possibility to recover the undetected mentions in later stages, while it is possible to apply some rule-based postprocessing to discard highly improbable mentions.
-    
-    That being said, precision still plays an important role. It could be argued that the incorrect mentions may be removed when the ED system cannot find a link for them. However, as emerging entities are highly valued in this work due to the fact that new organizations are formed every day, the mentions without a link are still displayed and are perhaps even considered as a candidate entity to be added to the KR.
-    
-    It should also be noted that the training time for Flair$^{NER}$ was much longer than that of BERT$^{NER}_{SC}$ and BERT$^{NER}$, as it needed more epochs to achieve a comparable performance.
-    
-    The model that performs best in terms of Organization mention recall and F1 score is BERT$^{NER}_{SC}$. Even though it has a lower precision than Flair$^{NER}$, it still improves the precision of the baseline model by 6.6 points.   
-    
-    \item The results on Table \ref{tab:all_ner_results_test} present that the developed neural NER, BERT$_{SC}^{NER}$, improves upon the Elsevier baseline significantly on the Test set as well. In terms of Organization mentions, gains of 2.9, 12.4 and 7.6 points for precision, recall and F1 score respectively are reported. For Grant mentions, gains of 0.6, 3.3 and 1.9 points for precision, recall and F1 score are observed. Even though the performance on grant numbers was very high already, it is very interesting to see that the recall was improved immensely. These results show the success of BERT$^{NER}_{SC}$ on the task of NER of funding bodies.
-    
-    \item The downside of using a neural model is that the inference time is significantly higher when a GPU is not used, as shown in Table \ref{tab:efficiencyresults}. However, on the positive side, even a small GPU having 4GB memory can speedup the execution massively.
-    
-    \item An error analysis is done on a small portion of sentences that contain annotations where BERT$_{SC}^{NER}$ made a mistake. This analysis gave important insights on the strengths and weaknesses of the model.
-    \begin{itemize}
-        \item Sometimes, mention boundaries may be ambiguous, and the gold annotations are not necessarily consistent. For some mentions, the country name in the immediate context is also included in the gold annotation. And, there is no clear scheme on when it should be included. It seems that this random behavior is also present in the annotations made by BERT$_{SC}^{NER}$. These instances lower the performance estimates without a solid ground. \\
-        \newline
-        \textbf{\textit{Sentence 1:}} ``This work was supported by a grant from the Korea National Institute of Health, Korea Centers for Disease Control and Prevention, Ministry of Health and Welfare, Korea (KCDC 4800-4847-311).'' \\
-        \textbf{\textit{Gold Annotation:}}``Ministry of Health and Welfare, Korea''\\
-        \textbf{\textit{BERT}}$_{SC}^{NER}$: ``Ministry of Health and Welfare''\\
-        \newline
-        \textbf{\textit{Sentence 2:}} ``Africa Gómez was supported by a National Environment Research Council (NERC) Advanced Fellowship (NE/B501298/1) and Javier Montero-Pau by a fellowship by the Spanish Ministerio de Ciencia y Tecnología (BES2004-5248).''\\
-        \textbf{\textit{Gold Annotation:}}``Ministerio de Ciencia y Tecnología''\\
-        \textbf{\textit{BERT}}$_{SC}^{NER}$: ``Spanish Ministerio de Ciencia y Tecnología''
-         \newline
-        \item Foreign text is not always handled properly. Trying a multilingual model may be a good experiment for the future. In the example below, the all the mentions are extracted correctly except the one that is shown.\\
-        \newline
-        \textbf{\textit{Sentence:}} ``This study was supported by grants from the Agencia Nacional de Promoción Científica y Tecnológica (BID 2015 PICT-3655); Consejo Nacional de Ciencia y Tecnología, Argentina; and Secretaria de Ciencia y Tecnología de la Universidad Nacional de Córdoba, Argentina, to Marta Hallak and Mauricio Galiano. Andrea Comba was a postdoctoral fellow of CONICET.''\\
-        \textbf{\textit{Gold Annotation:}}``Secretaria de Ciencia y Tecnología de la Universidad Nacional de Córdoba''\\
-        \textbf{\textit{BERT}}$_{SC}^{NER}$: ``Secretaria'' and `` Universidad Nacional de Córdoba''
-        \newline
-        \item The sentence classifier developed by Elsevier is used beforehand to distinguish the sentences that contain funding information. However, it is possible that organizations that did not fund the corresponding research are also mentioned in those sentences for some other reason. In the sentence below, an example of such organization is displayed (``Australian Breast Cancer Family Study (ABCFS)''\footnote{\url{https://www.pedigree.org.au/pedigree-studies/abcfr.aspx}}), and BERT$_{SC}^{NER}$ did not extract this as a mention. Hence, there is a possibility that the model learned the difference between an Organization mention and an Organization mention that is mentioned to be a funder. \\
-        \newline
-        \textbf{\textit{Sentence:}} ``The Australian Breast Cancer Family Study (ABCFS) was supported by grant UM1 CA164920 from the National Cancer Institute (USA).''
-        \newline
-        \item Currently, BERT$_{SC}^{NER}$ utilizes only a linear layer for token classification. However, it is believed that using a CRF layer may reduce the precision errors. Some extracted mentions were observed to be given an ``I'' label after an ``O'' label, which is illegal in IOB-Tagging scheme. Most of these mentions are words that are commonly found in funding organization mentions but do not refer to a unique entity by themselves. Some examples are ``Infections'', ``Resistance'', ``England'', ``System'', ``Hospital'' and ``Fund''. A CRF layer may help setting an ``O'' label for such mentions.
-        \newline
-        \item There are still errors when detecting the mention boundaries.\\
-        \newline
-         \textbf{\textit{Sentence:}}``The Section of Metabolic Medicine is funded by grants from the Medical Research Council, Biotechnology and Biological Sciences Research Council, National Institute for Health Research (NIHR), an Integrative Mammalian Biology Capacity Building Award and an FP7-HEALTH-2009-241592 EuroCHIP grant, and is supported by the NIHR Imperial Biomedical Research Centre Funding Scheme.''\\
-        \textbf{\textit{Gold Annotation:}}``NIHR Imperial Biomedical Research Centre''\\
-        \textbf{\textit{BERT}}$_{SC}^{NER}$: ``NIHR'' and ``Imperial Biomedical Research Centre''
-    \end{itemize}
-\end{itemize}
+For extracting the mentions of funding organizations and their respective grant numbers, Flair$^{NER}$, BERT$^{NER}$ and BERT$^{NER}_{SC}$ are trained and compared. First thing that can be noticed from Table \ref{tab:all_ner_results} is that Elsevier's baseline already has a high performance for Grant mentions. Hence, for those it may be unnecessary to switch from a linear model to a neural model. However, grant mentions are an important part of funding information extraction, and it is better to have a single model that can handle both types of mentions. Moreover, some performance improvement still takes place. When a neural model is used, a minimum gain of 1.6 points is observed in terms of F1-score for Grant mentions.
 
+The performance on Grant mentions for BERT$^{NER}$ shows the ability of BERT to understand patterns even though they are not necessarily included in its WordPiece vocabulary as a single word or a series of single characters. Grant numbers are usually combinations of letters, numbers and symbols such as ``-'', and hence are separated in a fine-grained way by the WordPiece tokenizer.  Still, BERT is able to infer that other combinations of letters and numbers are also probably grant mentions, even though that specific combination was not encountered by the model before.
+
+Another interesting trend that can be seen from Table \ref{tab:all_ner_results} is that while BERT$^{NER}$ and Flair$^{NER}$ do not have an immense difference in terms of F1 Score for Organization mentions, BERT$_{NER}$ has a much stronger recall and Flair$^{NER}$ has a much stronger precision. In this work, recall is favored over precision, as there is no possibility to recover the undetected mentions in later stages, while it is possible to apply some rule-based postprocessing to discard highly improbable mentions. That being said, precision still plays an important role. It could be argued that the incorrect mentions may be removed when the ED system cannot find a link for them. However, as emerging entities are highly valued in this work due to the fact that new organizations are formed every day, the mentions without a link are still displayed and are perhaps even considered as a candidate entity to be added to the KR. It should also be noted that the training time for Flair$^{NER}$ was much longer than that of BERT$^{NER}_{SC}$ and BERT$^{NER}$, as it needed more epochs to achieve a comparable performance. The model that performs best in terms of Organization mention recall and F1 score is BERT$^{NER}_{SC}$. Even though it has a lower precision than Flair$^{NER}$, it still improves the precision of the baseline model by 6.6 points.   
+
+The results on Table \ref{tab:all_ner_results_test} present that the developed neural NER, BERT$_{SC}^{NER}$, improves upon the Elsevier baseline significantly on the Test set as well. In terms of Organization mentions, gains of 2.9, 12.4 and 7.6 points for precision, recall and F1 score respectively are reported. For Grant mentions, gains of 0.6, 3.3 and 1.9 points for precision, recall and F1 score are observed. Even though the performance on grant numbers was very high already, it is very interesting to see that the recall was improved immensely. These results show the success of BERT$^{NER}_{SC}$ on the task of NER of funding bodies. On the other hand, the downside of using a neural model is that the inference time is significantly higher when a GPU is not used, as shown in Table \ref{tab:efficiencyresults}. However, on the positive side, even a small GPU having 4GB memory can speedup the execution massively.
+
+An error analysis is done on a small portion of sentences that contain annotations where BERT$_{SC}^{NER}$ made a mistake. This analysis gave important insights on the strengths and weaknesses of the model. Sometimes, mention boundaries may be ambiguous, and the gold annotations are not necessarily consistent. For some mentions, the country name in the immediate context is also included in the gold annotation. And, there is no clear scheme on when it should be included. It seems that this random behavior is also present in the annotations made by BERT$_{SC}^{NER}$. These instances lower the performance estimates without a solid ground.\todo{Is it okay if I put these sentences? prroblems may be with: gdpr, elsevier confidentiality}
+\newline
+\begin{center}
+\fbox{
+    \begin{minipage}{0.8\linewidth}
+    ``This work was supported by a grant from the Korea National Institute of Health, Korea Centers for Disease Control and Prevention, \underline{Ministry of Health and Welfare, Korea} (KCDC 4800-4847-311).''\footnote{doi:10.1007/s00436-018-5941-4}\\
+    \textbf{BERT}$_{SC}^{NER}$: ``Ministry of Health and Welfare''
+    \\
+    \\
+    ``Africa Gómez was supported by a National Environment Research Council (NERC) Advanced Fellowship (NE/B501298/1) and Javier Montero-Pau by a fellowship by the Spanish \underline{Ministerio de Ciencia y Tecnología} (BES2004-5248).''\\
+    \textbf{BERT}$_{SC}^{NER}$: ``Spanish Ministerio de Ciencia y Tecnología''\footnote{doi:10.7717/peerj.6094}
+    \end{minipage}
+}\captionof{figure}{Some instances where the gold annotations are not consistent and BERT$_{SC}^{NER}$ makes a mistake. }
+\end{center}
+
+In addition, foreign text is not always handled properly. Trying a multilingual model may be a good experiment for the future. Also, it is possible to see that there are still errors when detecting the mention boundaries for adjacent Organization mentions.
+\newline
+\begin{center}
+\fbox{
+    \begin{minipage}{0.8\linewidth}
+    ``This study was supported by grants from the Agencia Nacional de Promoción Científica y Tecnológica (BID 2015 PICT-3655); Consejo Nacional de Ciencia y Tecnología, Argentina; and \underline{Secretaria de Ciencia y Tecnología de la Universidad Nacional de} \underline{Córdoba}, Argentina, to Marta Hallak and Mauricio Galiano. Andrea Comba was a postdoctoral fellow of CONICET.''\footnote{doi:10.1007/s12035-018-1182-x
+}\\
+    \textbf{BERT}$_{SC}^{NER}$: ``Secretaria'' and ``Universidad Nacional de Córdoba''
+    \end{minipage}
+}\captionof{figure}{BERT$_{SC}^{NER}$ makes a mistake on a mention with foreign name.}
+\end{center}
+\newline
+\begin{center}
+\fbox{
+    \begin{minipage}{0.8\linewidth}
+    ``The Section of Metabolic Medicine is funded by grants from the Medical Research Council, Biotechnology and Biological Sciences Research Council, National Institute for Health Research (NIHR), an Integrative Mammalian Biology Capacity Building Award and an FP7-HEALTH-2009-241592 EuroCHIP grant, and is supported by the \underline{NIHR Imperial Biomedical Research Centre} Funding Scheme.''\footnote{doi:10.1586/eem.11.50
+}\\
+    \textbf{BERT}$_{SC}^{NER}$: ``NIHR'' and ``Imperial Biomedical Research Centre''
+    \end{minipage}
+}\captionof{figure}{BERT$_{SC}^{NER}$ makes a mistake on mention boundaries}
+\end{center}
+Currently, BERT$_{SC}^{NER}$ utilizes only a linear layer for token classification. However, it is believed that using a CRF layer may reduce the precision errors. Some extracted mentions were observed to be given an ``I'' label after an ``O'' label, which is illegal in IOB-Tagging scheme. Most of these mentions are words that are commonly found in funding organization mentions but do not refer to a unique entity by themselves. Some examples are ``Infections'', ``Resistance'', ``England'', ``System'', ``Hospital'' and ``Fund''. A CRF layer may help setting an ``O'' label for such mentions.
 
 \subsubsection{ED for Funder Organizations}
 
-First, the Biencoder architecture of BLINK that had a suitable representation for the task and scaled-down hyperparameters for the available computational power, Biencoder$_B$, is trained and evaluated. It can be seen from Table \ref{tab:biencoderbres} that the performance does not improve with the given hard negative training. One of the reasons could be that in-batch random negatives are not be utilized properly. In Figure \ref{fig:entpopul}, it can be seen that the entity distribution is highly skewed. This would mean that the same entities would appear as random negatives frequently for many mentions. In addition, as the available GPU memory is small, after scaling down the hyperparameters there was only one hard negative added per mention. This may be too little to utilize hard negatives. When it was switched from Biencoder$_B$ to Biencoder$_{ADPT}$, large performance gains were observed when hard negatives were included in the training. The only advantage of Biencoder$_B$ over Biencoder$_{ADPT}$ is that the former has a much lower training time. Appendix \ref{sec:app:biencoderadapt} details the improvement in performance after each round of training.
+First, Biencoder$_B$ is trained and evaluated. It can be seen from Table \ref{tab:biencoderbres} that the performance does not improve with the given hard negative training. One of the reasons could be that in-batch random negatives are not be utilized properly. In Figure \ref{fig:entpopul}, it can be seen that the entity distribution is highly skewed. This would mean that the same entities would appear as random negatives frequently for many mentions. In addition, as the available GPU memory is small, after scaling down the hyperparameters there was only one hard negative added per mention. This may be too little to utilize hard negatives. When it was switched from Biencoder$_B$ to Biencoder$_{ADPT}$, large performance gains were observed when hard negatives were included in the training. The only advantage of Biencoder$_B$ over Biencoder$_{ADPT}$ is that the former has a much lower training time.
 
-Table \ref{tab:edresultsval} compares the performance of Biencoder$_{ADPT}$ with a baseline system that only uses Commonness and the current Elsevier baseline.
-\begin{itemize}
-    \item First, it can be seen that selecting a threshold for NIL mention detection improves the performance of Biencoder$_{ADPT}$. With this new threshold, the overall micro average accuracy increased by 1.5 points, and the scores for the EE setting improved rapidly, showing that the new threshold is better at detecting emerging entities. However, the recall of InKB evaluation dropped by 1.5 points. This is because with the new threshold, even if Biencoder$_{ADPT}$ manages to find the correct entity, the mention will not be linked when the score is between 0.5 and 0.728. This decrease shows that a linear threshold may not be the optimal solution, and maybe a classifier or a non-linear threshold may help increasing the quality of NIL-mention detection.
-    \item Another interesting observation is that there is a big difference between the performance on Training and Validation$^1$ datasets, shown in Appendix \ref{sec:app:biencoderadapt}. After 4 rounds of training is completed, the micro averaged accuracy on Training set is around 5.5 points higher than that of Validation$^1$ with both the default and optimized threshold. This difference is around 6.5 points when the F1 score of InKB evaluation is checked, and is around 20 points for F1 score in EE setting. Hence, we believe that neither the NIL mention detection learned by the model nor by the optimized threshold, generalizes well outside the Training set itself. Improving this could be one of the keys to improve the performance overall.
-    \item The Elsevier baseline performs around 2.5 points higher than Biencoder$_{ADPT}$ in terms of micro averaged accuracy. A similar performance difference is observed in other settings as well, suggesting that this baseline performs better overall, both NIL mention detection and InKB entity disambiguation.
-    \item Surprisingly, the system that is based solely on Commonness performs well. When micro averaged accuracy is checked, Biencoder$_{ADPT}$ improves upon Commonness by 4.5 points and the Elsevier baseline by 7 points. Considering that both Biencoder$_{ADPT}$ and the Elsevier baseline are highly complex models, it would be expected to gain more improvement. The reason for this may be that most of the mentions are actually easy to disambiguate, and that the more ambiguous cases are the minority. This should come as no surprise when the entity distribution shown in Figure \ref{fig:entpopul} is checked. With a quick math, it can be seen that the accuracy would be around 7\% if all the mentions were assigned the most frequent entity. If the NIL mentions were excluded, this would increase up to 8.8\%.
-    \todo{rest items after ED model selection}
-    \item Discussion over the implementation of the Cross-Encoder. I will show how the recall changes in higher ranks and display how much the performance might be improved with it. Then, I will mention the importance of inference time and say that the Cross-Encoder was not implemented because of that.
-    \item Initial results suggested that the neural model had a good performance on hard cases, but the Elsevier model had better performance on very easy cases. When we select the best model for ED, I will do an error analysis and show the strengths and weaknesses of the model. \\
-    ``When there is an exact match between a mention
-and its entity name, both BLINK and GENRE almost always make an accurate prediction. '' \cite{GENRE}. Maybe this didn't happen for us as the training data is limited so the mention start and end tags weren't represented properly.
-    \item I will write a few sentences about the Test set performance.
-\end{itemize}
+Table \ref{tab:edresultsval} compares the performance of Biencoder$_{ADPT}$ with a baseline system that only uses Commonness and the current Elsevier ED model. Surprisingly, the system that is based solely on commonness performs well. When micro averaged accuracy is checked, Biencoder$_{ADPT}$ improves upon commonness by 4.5 points and the Elsevier model by 7 points. Considering that both Biencoder$_{ADPT}$ and the Elsevier model are highly complex models, it would be expected to gain more improvement. The reason for this may be that most of the mentions are actually easy to disambiguate, and that the more ambiguous cases are the minority. This should come as no surprise when the entity distribution shown in Figure \ref{fig:entpopul} is checked. With a quick math, it can be seen that the accuracy would be around 7\% if all the mentions were assigned the most frequent entity. If NIL mentions were excluded, this would increase up to 8.8\%. It can also be seen that the Elsevier model performs around 2.5 points higher than the best Biencoder$_{ADPT}$ in terms of micro averaged accuracy. A similar performance difference is observed in other settings as well, suggesting that this system performs better overall, both NIL mention detection and InKB entity disambiguation.
 
-There were some concerns on whether a neural approach would work in funding domain with the dataset at hand. Most of the neural approaches either perform neural ED by using a classifier over the whole entity space \textcolor{red}{\cite{}}, or they utilize entity embeddings \textcolor{red}{\cite{}}. The former was not possible due to the Training set not covering the whole entity space. For the latter, there are many successful methodologies, such as TransE \cite{TransE} or Wikipedia2Vec \cite{wikipedia2vec2}. However, these are not suitable for this task as most of the entities in this KR do not exist in general-purpose KRs and there is no informative graph structure. The Biencoder used in the BLINK architecture enabled obtaining entity embeddings with the information available. Even though the neural ED model did not outperform the Elsevier baseline, this work showed that it was indeed possible to adapt entity embeddings and neural approaches for the problem of funding organization disambiguation.
+It is also shown that selecting a threshold for NIL mention detection improves the performance of Biencoder$_{ADPT}$. With a threshold of 0.728, the overall micro averaged accuracy increases by 1.5 points, and the scores for the EE setting improves rapidly, showing that the new threshold is better at detecting emerging entities. However, the recall of InKB evaluation dropped by 1.5 points. This is because with the new threshold, even if Biencoder$_{ADPT}$ manages to find the correct entity, the mention will not be linked when the score is between 0.5 and 0.728. This decrease shows that a linear threshold may not be the optimal solution, and maybe a classifier or a non-linear threshold may help increasing the quality of NIL mention detection. Another interesting observation is that there is a big difference between the performance on Training and Validation$^1$ datasets, shown in Appendix \ref{sec:app:biencoderadapt}. After 4 rounds of training is completed, the micro averaged accuracy on Training set is around 5.5 points higher than that of Validation$^1$ with both the default and optimized threshold. This difference is around 6.5 points when the F1 score of InKB evaluation is checked, and is around 20 points for F1 score in EE setting. Hence, we believe that neither the NIL mention detection learned by the model nor by the optimized threshold generalizes well outside the Training set itself. Improving this could be one of the keys to improve the performance overall.
+
+The usage of Reranker$_{12}$ improves the performance significantly as shown in Table \ref{tab:edresultsval}, despite it being a linear model utilizing trivial ED features. Hence, at least for this problem, it could be that an expensive cross-encoder is not needed. Apart from efficiency, one advantage of Reranker$_{12}$ over cross-encoder is that it utilizes information that was not used in the Biencoder$_{ADPT}$, such as lexical similarity and dataset statistics. On the other hand, the cross-encoder utilizes BERT's capability of determining the strength of the relation of two sentences, different from both Biencoder$_{ADPT}$ and Reranker$_{12}$. It could be the fact that the information provided by Reranker$_{12}$ is more informative for this task. Lastly, it can be seen from Table \ref{tab:coverageestimation} that Biencoder$_{ADPT}$ has a very high coverage on the first rank. Thus, the improvement that can be obtained from any reranker is limited, and is questionable whether it is worth to use an expensive model for such improvement.
+
+Another interesting question to answer is what value using Reranker$_{12}$ adds to \\ Biencoder$_{ADPT}$. It is observed that there are 371 instances on Validation$^2$ split where Biencoder$_{ADPT}$ ranks the correct entity on top, but does not perform the linking as the score is lower than 0.728. Reranker$_{12}$ solves 85 of these cases, which amounts to 22.9\% of them. On the other hand, for 826 cases, Biencoder$_{ADPT}$ ranks the correct entity between the second place and the twelfth place. Reranker$_{12}$ solves 376 of these cases, which amounts to 45.5\%. Thus, it can be said that Reranker$_{12}$ helps with both these cases. When the features of Reranker$_{12}$ are investigated, it can be seen from Figure \ref{fig:rerankercoef} that both commonness and the score of Biencoder$_{ADPT}$ have very high coefficients, followed by the lexical similarity which is has less than half the magnitude. As Reranker$_{12}$ is linear, this trend can be directly seen when the samples are manually investigated. The instances for which Reranker$_{12}$ manages to fix the errors are the ones where Biencoder$_{ADPT}$ assigns high scores to the correct entities, and possibly a high commonness value and lexical similarity is also observed. The samples where the score assigned by Biencoder$_{ADPT}$ to the correct entity is lower than 0.5, the mistakes are a lot harder to fix and require very high commonness values. Hence, Reranker$_{12}$ helps for the more obvious errors, and when the score assigned by Biencoder$_{ADPT}$ is not too low.
+
+\cite{GENRE} reports that BLINK almost always makes an accurate prediction when the mention is matching exactly to the entity name. However, this is not always the case for Biencoder$_{ADPT}$. It is believed that there may be two possible reasons. First is that the entity representation contains the concatenation of all possible labels, so it could be the case that the significance of having an exact match with a label is not understood by the model. However, BLINK's representation also does not solely consist of the title of the entity as the description is also used. Hence, if this was the case, we believe that a similar problem could occur with BLINK as well. Second reason could be that the boundaries of the mention cannot be separated well from the context due to the fact that the representation of the separator tokens ([$M_s$] and [$M_e$]) are not learned well with the current amount of training instances. Still, no concrete proof is obtained to explain this trend.
+
+Lastly, some samples from Validation$^2$ were manually investigated such that Reranker$_{12}$ was correct and Elsevier's ED model was wrong, or vice versa, to better understand the strengths and weaknesses of the developed approach. It was interesting to see that some very easy cases are missed completely by Reranker$_{12}$, and some hard cases were disambiguated correctly. Some examples of these instances are shown below. The gold mention is underlined.
+
+\begin{center}
+\fbox{
+    \begin{minipage}{0.8\linewidth}
+    ``This work was supported as well by the Gordon and Betty Moore Foundation, the Canada Foundation for Innovation, the Ontario Ministry of Research and Innovation, the Natural Sciences and Engineering Research Council of Canada, the British Columbia Knowledge Development Fund, the Association of Canadian Universities for Research in Astronomy (ACURA) , the Association of Universities for Research in Astronomy (AURA), the U.S. National Science Foundation, the \underline{National Institutes of Natural Sciences} of Japan, and the Department of Atomic Energy of India.''\footnote{doi:10.1117/12.2312281
+}\\
+    \textbf{Correct Entity's Labels:} ``National Institutes of Natural Sciences'' \footnote{\url{https://www.nins.jp/en/}}
+    \\
+    \\
+    ``D.J.D. is supported by the Canada Research Chairs program, CIHR grant 123391, and a \underline{BBDC} Novo Nordisk Chair in diabetes research.''\footnote{doi:10.1016/j.cmet.2016.08.003}\\
+    \textbf{Correct Entity's Labels:} ``Banting and Best Diabetes Centre, University of Toronto'', ``BBDC''\footnote{\url{https://bbdc.org/}}
+    \end{minipage}
+}\captionof{figure}{Easy cases where Biencoder$_{ADPT}$ and Reranker$_{12}$ failed whereas Elsevier's ED found the correct entity}
+\end{center}
+
+\begin{center}
+\fbox{
+    \begin{minipage}{0.8\linewidth}
+    ``We acknowledge the support of ANPCyT, Argentina; YerPhI, Armenia; ARC, Australia; BMWFW and FWF, Austria; ANAS, Azerbaijan; SSTC, Belarus; CNPq and FAPESP, Brazil; NSERC, NRC and CFI, Canada; CERN; CONICYT, Chile; CAS, MOST and NSFC, China; COLCIEN-CIAS, Colombia; \underline{MSMT CR} MPO CR and VSC CR, Czech Republic; DNRF and DNSRC, Denmark;...''\footnote{doi:10.1140/epjc/s10052-018-6219-9}\\
+    \textbf{Correct Entity's Labels:} ``Ministerstvo Školství, Mládeže a Tělovýchovy'', ``MŠMT'' \footnote{\url{https://www.msmt.cz/}}
+    \\
+    \\
+    ``C.S.F. has also been supported by the Director, Office of Science, Office of Basic Energy Sciences (BSE), Materials Sciences and Engineering (MSE) Division, of the US Department of Energy under Contract No. DE-AC02-05CH11231, through the Laboratory Directed Research and Development Program of Lawrence Berkeley National Laboratory, through a US DOE BES \underline{MSE} grant at the University of California Davis from the X-Ray Scattering Program under...''\footnote{doi:10.1103/PhysRevB.98.235146}
+    \textbf{Correct Entity's Labels:} ``Division of Materials Sciences and Engineering''\footnote{\url{https://www.energy.gov/}}
+    \end{minipage}
+}\captionof{figure}{Hard cases where Biencoder$_{ADPT}$ and Reranker$_{12}$ found the correct entity whereas Elsevier's ED failed}
+\end{center}
+
+There were some concerns on whether a neural approach would work in funding domain with the dataset and KR at hand. Most of the neural approaches either perform neural ED by using a classifier over the whole entity space \cite{bertEL}, or they utilize entity embeddings \cite{scalablezeroshot,dca,googleintern}. The former was not possible due to the Training split not covering the whole entity space. For the latter, there are many successful methodologies, such as TransE or Wikipedia2Vec. However, these are not suitable for this task as most of the entities in this KR do not exist in general-purpose KRs and there is no informative graph structure. The biencoder used in the BLINK architecture enabled obtaining entity embeddings with the information available. Even though the neural ED model did not outperform the Elsevier baseline, this work showed that it was indeed possible to adapt entity embeddings and neural approaches for the problem of funding organization disambiguation. Table \ref{tab:edresultstest} shows that there is only a slight performance difference between the Elsevier model and the neural model, despite the fact that the former requires significant effort and domain knowledge for feature generation. We believe that it is also a success of BLINK's system that it can perform on par with this model, given the low amount of training data and the fact that a completely different KR is being used.
 
 \subsubsection{Overall EL Performance}
-The overall EL performance of different NER and ED models combined are shown on Table \ref{tab:elresultsvalid}. These results show the performance of the respective components in terms of extracting funding organization information.
+The overall EL performance of different NER and ED models combined are presented in Table \ref{tab:elresultsvalid}. These results show the performance of the respective components in terms of extracting funding organization information.
 
-First thing to note is that, as expected, the performance increases for all cases when BERT$_{SC}^{NER}$ is used instead of the Elsevier's NER. As mentioned, in Validation$^2$ split, BERT$_{SC}^{NER}$ improves the recall for 10.9 points. It is possible to see a similar recall improvement for all ED systems when BERT$_{SC}^{NER}$ is used as the NER component. This suggests that improving BERT$_{SC}^{NER}$ could possibly push the performance further. 
+First thing to note is that, as expected, the performance increases for all cases when BERT$_{SC}^{NER}$ is used instead of Elsevier's NER. As mentioned, in Validation$^2$ split, BERT$_{SC}^{NER}$ improves the recall for 10.9 points. It is possible to see a similar recall improvement for all ED systems when BERT$_{SC}^{NER}$ is used as the NER component. This suggests that improving BERT$_{SC}^{NER}$ could possibly push the performance further. 
 
-As for precision, the 6.5 points improvement gained by BERT$_{SC}^{NER}$ can be seen in the ``Normal'' and ``EE'' EL evaluation settings. However, in ``InKB'' setting, the increase in precision is lower than expected. There may be a few reasons on why this is the case. The increase in precision could be attributed to less false positive and/or more true positive mentions extracted by the NER. It could be that the observed improvement mostly corresponds to the former. For the latter, it may be that the new true positive mentions cannot be disambiguated correctly by any of the ED systems discussed in this work. Also, since this trend is happening in ``InKB'' setting, such mentions probably are not emerging entities. They may be very hard cases or some errors related to the gold annotations or the KR.
+As for precision, the 6.5 points improvement gained by BERT$_{SC}^{NER}$ can be seen in the ``Normal'' and ``EE'' EL evaluation settings. However, in ``InKB'' setting, the increase in precision is lower than expected. There may be a few reasons on why this is the case. The increase in precision could be attributed to less false positive and/or more true positive mentions extracted by the NER. It is possible that the new true positive or the removed false positive mentions are referring to emerging entities.
 
-When the ED performance was evaluated, the Elsevier baseline had 4 points higher performance than that of Biencoder$_{ADPT}$ based on micro averaged accuracy. The performance gap seems to be lower with respect to the EL evaluation. The main difference between these two evaluations is that, ED is done using the Gold annotation mentions, while EL is done using the mentions extracted by an NER component. Given that the models were also trained with Gold annotation mentions, it could be that the performance of Elsevier' baseline ED component drops when the input mention distribution is different. It could also mean that BERT$^{NER}_{SC}$ is more robust to shifts in input distribution, and could generalize better to other datasets.
+On ``Normal'' setting, Validation$^2$ results show only a minor difference of micro averaged F1 score when Reranker$_{12}$ or Elsevier's ED model is used for disambiguation. For the ``InKB'' setting, the difference is almost non-existent.  The reason for it could be that the instances where Elsevier's model perform better were not extracted correctly by the NER components, and most of the performance difference comes from the power of detecting emerging entities.
 
-In all settings, the performance on emerging entities are quite low. Even the best model combination has a micro averaged F1 score of 54.91, which is immensely lower than that of the ``InKB'' setting, 86.98. This further supports the fact that another methodology should be used for NIL mention detection.
+In all settings, the performance on emerging entities are quite low. Even the best model combination has a micro averaged F1 score of 54.91 on Validation$^2$, which is immensely lower than that of the ``InKB'' setting, 86.98. This gap persists on Test split as well. This further supports the fact that another methodology should be used for NIL mention detection.
 
+When Test results on Table \ref{tab:elresultstest} are checked, it can be seen that the new approach improves the current Elsevier baseline by a great margin on all evaluation settings, thanks to the success of BERT$^{NER}_{SC}$. 
 
-\todo{the items below after ED model selection}
-\begin{itemize}
-    \item I will mention the ELQ paper. They extend BLINK to do end-to-end EL. I will say that this might be a good experiment for the future.
-    \item Some sentences about inference time and how incorporating ELQ may increase it.
-    \item A few notes about the Test set performance
-    \item Some error analysis if I see anything intereseting
-\end{itemize}
+Some of the samples where the developed method makes mistakes were investigated manually. One of the interesting findings was that as Biencoder$_{ADPT}$ uses context, it sometimes helps with some errors regarding the mention spans. An example is shown below.
 
+\begin{center}
+\fbox{
+    \begin{minipage}{0.8\linewidth}
+    ``ZW is supported by the South African National Research Foundation.''\footnote{doi:10.1088/1742-6596/932/1/012021}\\
+    \textbf{Correct Mention:} ``South African National Research Foundation’’\\
+    \textbf{Extracted Mentions:} ``South'' and ``National Research Foundation''\\
+    \textbf{Linked to:} First to NIL, second to correct entity\footnote{\url{	https://www.nrf.ac.za/}}
+    \end{minipage}
+}\captionof{figure}{Biencoder$_{ADPT}$ finds correct entity even though mention span is not extracted correctly.}
+\end{center}
+
+It is not clear from the gold annotations whether the funding programs should also be extracted, similar to funding organizations. The KR also contains some entities for specific funding programs, but there is no distinction made regarding whether an entity is a funding organization or a funding program. This distinction would be highly valuable. Many ED research, including DeepType \cite{raiman}, reports that type information is the key to link ambiguous mentions, and also mention type classification is deemed highly important for NER systems. Moreover, the trend of annotating some and not annotating other funding programs deteriorates the quality of the training data as it introduces systematic errors, confusing the modes. Below, an example of such case is shown.
+
+\begin{center}
+\fbox{
+    \begin{minipage}{0.8\linewidth}
+    ``This research is financially supported by the National Natural Science Foundation of China (No. 21473153), the Science Foundation for the Excellent Youth Scholars from Universities and Colleges of Hebei Province (No. YQ2013026), the Support Program for the Top Young Talents of Hebei Province, the Post-graduate’s Innovation Fund Project of Hebei Province (No. 2016SJBS009), the China Postdoctoral Science Foundation (No. 2015M580214), and the Scientific and Technological Research and Development Program of Qinhuangdao City (No. 201502A006).''\footnote{doi:	10.1080/10584587.2017.1352390}\\
+    \textbf{Example Program:} ``Support Program for the Top Young Talents of Hebei Province’’\\
+    \textbf{=$>$} This program is not annotated as a mention in the training set.
+    \\ 
+    \\
+    ``B.X., J.W., Y.L., and W.X. are supported by Air Force Office of Scientific Research Young Investigator Program Award, FA9550-17-1-0094 and by the Defense Advanced Research Projects Agency Young Faculty Award program, D15AP00107.''\footnote{doi:	10.1073/pnas.1722063115}\\
+    \textbf{Gold Mention:} ``Air Force Office of Scientific Research Young Investigator Program Award''\\
+    \textbf{Extracted Mention:} ``Air Force Office of Scientific Research''\\
+    \textbf{Linked to:} The organization offering the grant program\footnote{\url{	https://www.afrl.af.mil/AFOSR/ }}
+    \end{minipage}
+}\captionof{figure}{Example of an inconsistent annotation}
+\end{center}
 
 
 
@@ -1280,6 +1452,13 @@ In all settings, the performance on emerging entities are quite low. Even the be
     \item Put Future Work somewhere here.
     \item Put Limitations here. (?)
     \item F: "Hierarchial Transformer Architecture" About how to combine labels of each entity 
+    \item  I will mention the ELQ paper. They extend BLINK to do end-to-end EL. I will say that this might be a good experiment for the future.
+    \item Some sentences about inference time and how incorporating ELQ may increase it. ELQ can help with mention boundary erros and also when long mentions are separated into two
+    \item maybe data generation with distant supervision it was in one of the articles of related work
+    \item if the biencoder is improved with more data, the reranker could be unnecessary as it fixes the most obvious errors.
+    \item systematic errors of the dataset should be fixed for a better training
+    \item program vs organization definition should be made clearly
+    \item mention classifier instead of sentecne classifier
 \end{itemize}
 
 
@@ -1412,7 +1591,7 @@ Table \ref{tab:biencoderadaptresapp} the scores of the models after each round o
 \vspace*{-3cm}\begin{table}[H]
     \centering
    \begin{tabular}{ccccc}
-    &&&Micro-Averaged & Macro-Averaged\\
+    &&&Micro Averaged & Macro Averaged\\
     Dataset & Round & Threshold     & Accuracy &Accuracy\\
     \hline
     Training & 1 & 0.5 & 62.36&64.44\\
