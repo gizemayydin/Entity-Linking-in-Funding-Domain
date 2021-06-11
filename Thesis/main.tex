@@ -24,7 +24,7 @@
 %             ||               %
 %             \/               %
 
-\def\thesistitle{Thesis Title}
+\def\thesistitle{Entity Linking in Funding Domain}
 \def\thesissubtitle{Thesis Subtitle}
 \def\thesisauthorfirst{Gizem}
 \def\thesisauthorsecond{Aydin}
@@ -34,7 +34,7 @@
 \def\extthesissupervisorsecond{Tabatabaei}
 \def\thesissecondreaderfirst{name}
 \def\thesissecondreadersecond{Surname}
-\def\thesisdate{date}
+\def\thesisdate{June 2021}
 
 
 %             /\               %
@@ -83,7 +83,7 @@
 	
 	\HRule \\[0.4cm]
 	{ \huge \bfseries \thesistitle}\\[0.1cm]
-	\textsc{\thesissubtitle}\\
+	%\textsc{\thesissubtitle}\\
 	\HRule \\[.5cm]
 	\textsc{\large Thesis MSc Computing Science}\\[.5cm]
 	
@@ -109,28 +109,26 @@
 	\clearpage
 \end{titlepage}
 
-\tableofcontents
 
 
 
-\newpage
 \begin{abstract}
     \textcolor{red}{ToDo after all document is finished:}
     \begin{itemize}
         \item \textcolor{red}{Check if the reference formats are correct, maybe remove urls}
-        \item \textcolor{red}{Find a title}
         \item \textcolor{red}{Add name of second reader}
-        
+        \item \textcolor{red}{Add titles of Faegheh and Amin}
+        \item \textcolor{red}{Fix the last sentence overflowing from Introduction}
     \end{itemize}
 \end{abstract}
-\newpage
+
+
+
+\tableofcontents
+
+
 \chapter{Introduction}
 \label{sec:intro}
-
-
-
-
-
 \section{Background and Motivation}
 Automatic extraction of funding information from academic articles has been an interesting subject for researchers, and various approaches have been proposed for this purpose \cite{ElsPaper,AckExtract,GrantExtractor}. Annotating articles with their corresponding funding information adds significant value to the research community. Furthermore, it is not possible to do this annotation manually due to the immense amount of literature, making automatization a must.
 
@@ -1453,20 +1451,33 @@ It is not clear from the gold annotations whether the funding programs should al
 
 \chapter{Conclusion}
 \label{chapter:Conclusion}
-\begin{itemize}
-    \item Put Future Work somewhere here.
-    \item Put Limitations here. (?)
-    \item F: "Hierarchial Transformer Architecture" About how to combine labels of each entity 
-    \item  I will mention the ELQ paper. They extend BLINK to do end-to-end EL. I will say that this might be a good experiment for the future.
-    \item Some sentences about inference time and how incorporating ELQ may increase it. ELQ can help with mention boundary erros and also when long mentions are separated into two
-    \item maybe data generation with distant supervision it was in one of the articles of related work
-    \item if the biencoder is improved with more data, the reranker could be unnecessary as it fixes the most obvious errors.
-    \item systematic errors of the dataset should be fixed for a better training
-    \item program vs organization definition should be made clearly
-    \item mention classifier instead of sentecne classifier
-\end{itemize}
+In this thesis, state-of-the-art neural Named Entity Recognition (NER) and Entity Disambiguation (ED) approaches are investigated and are adapted to funding domain to tackle the Entity Linking (EL) problem in funding information extraction. The aim was to investigate whether these general-purpose neural approaches would be suitable for a domain-specific application where a Knowledge Repository (KR) other than Wikipedia is used and labelled data is limited.
 
+For the NER task, the NER architectures proposed by Akbik et al. \cite{flairpaper} and Devlin et al. \cite{BERT}, Flair$^{NER}$ and BERT$^{NER}$, are trained and compared. Both models performed extremely well for Grant mentions, and had a similar F1-Score for Organization mentions. However, it is noticed that the recall of BERT$^{NER}$ was significantly higher than that of Flair$^{NER}$, and Flair$^{NER}$ had a much higher precision. Moreover, the training for Flair$^{NER}$ took much longer as it needed a lot more epochs to achieve this performance. At the end, it is decided to continue with BERT$^{NER}$ instead of Flair$^{NER}$ as recall is preferred over precision. We believe that this trend may persist on other datasets as well, and we would suggest using Flair$^{NER}$ for tasks that require high precision, and BERT$^{NER}$ for the ones requiring high recall.
 
+A new BERT model, BERT$_{SC}$, is developed by pretraining BERT$_{BASE}$ further with sentences where funding information is acknowledged. For this purpose, the Task-Adaptive Pretraining (TAPT) strategy proposed by \cite{DontStop} is followed. Later on, the effectiveness of domain adaptation is shown on the NER task, where BERT$_{SC}^{NER}$ outperformed BERT$^{NER}$ in two different hyperparameter settings. Based on these results, it is decided to use BERT$_{SC}^{NER}$ as the neural NER component for this thesis. BERT$_{SC}^{NER}$ is then compared with the current NER model used by Elsevier which is based on Stanford NER, and large gains of performance is observed. BERT$_{SC}^{NER}$ outperformed the current NER component by 2.9, 12.4 and 7.6 points in precision, recall and F1 Score for Organization mentions, and 0.6, 3.3 and 1.9 points for Grant mentions. It is believed that using a complex model such as BERT$_{SC}^{NER}$ is not necessary to detect grant mentions, but as they are crucial parts of funding information, it is better to have a single model that can extract both types of mentions. In the beginning of the thesis, there was skepticism towards using BERT-based models for extracting Grant mentions. BERT makes use of WordPiece embeddings, and hence the grant numbers which are essentially a combination of letters and digits are broken down to characters or mostly groups of characters. However, it was observed that BERT is able to recognize this patterns as Grant mention successfully. BERT$_{SC}^{NER}$ obtained F1 scores of 82.08 and 95.23 for Organization and Grant mentions respectively on the Test split.
+
+To tackle ED of funding organization, BLINK's architecture is selected for experimentation. BLINK offers scalable inference time, zero-shot linking capabilities and a flexible architecture that can be modified easily. Also, the model is shown to be successful in different pubic benchmark datasets. BLINK uses an entity's title and description for representation. As this information is not available in this work, possible names of the organizations and country of origin are used as representation. Furthermore, the BERT models of BLINK are replaced with BERT$_{SC}$ due to its success in the NER task. Initially the candidate selector of BLINK is trained and the hyperparameters are scaled down to fit the computational power at hand. However, the training was not successful. Hence, a modified version of BLINK's candidate selector, Biencoder$_{ADPT}$ is proposed. Biencoder$_{ADPT}$ utilizes a binary classification setting, and hence can be trained without the need of large amounts of memory. Another advantage of Biencoder$_{ADPT}$ is that it can handle NIL mentions naturally, which is not included in the research of BLINK.
+
+The performance of Biencoder$_{ADPT}$ as an ED system is compared with Elsevier's current ED model, which utilizes BM25 similarity for candidate selection and a Gradient Boosted Decision Tree with hand crafted features for reranking. It is observed that Biencoder$_{ADPT}$ performed 2.6 points lower than the current model in terms of micro averaged accuracy. An error analysis showed that even though Biencoder$_{ADPT}$ can handle hard samples, it did not match the performance of the current model when the samples were very easy, such as the cases where the mention was matching exactly with the entity's label. As the inference time is important for this thesis, instead of the cross-encoder reranker of BLINK, a linear reranker, Reranker$_{12}$ is implemented. Reranker$_{12}$ is a logistic regression model that works on top of 12 candidate entities extracted by Biencoder$_{ADPT}$, and utilizes classical ED features such as commonness, lexical similarity and link probability. Reranker$_{12}$ improved the performance of the developed system as it aided fixing the most obvious errors. On Test set it was revealed that Reranker$_{12}$ performed only 0.4 points worse than Elsevier's current ED model in terms of micro averaged accuracy. The developed ED model that uses Biencoder$_{ADPT}$ as candidate selector and Reranker$_{12}$ for candidate reranking obtained an accuracy of 89.9 on Test split.
+
+Lastly, the EL capabilities of the developed approaches are compared. It was seen that using BERT$^{NER}_{SC}$ instead of Elsevier's NER model improved the performance for this task regardless of the ED model used. Also, Elsevier's ED model continued outperforming Reranker$_{12}$ in EL setting regardless of the NER model used. However, it is noticed that the performance gap is even smaller in this setting. When BERT$^{NER}_{SC}$ is used as the NER model, Elsevier's ED model performed 0.3 and 0.6 points better than Reranker$_{12}$ in terms of F1 score for ``Normal'' and ``EE'' evaluation settings, while Reranker$_{12}$ performed 0.1 points better then the current model in terms of F1 score for ``InKB'' setting.
+
+One interesting observation is that none of the ED models that were experimented with are able to perform NIL mention detection successfully. It can be seen from ED evaluation that there is 11.1 and 11.8 points difference between the F1 scores of ``EE'' setting and ``InKB'' setting for Reranker$_{12}$ and Elsevier's ED model respectively. Moreover, this difference increases to 32.7 and 34 points for EL evaluation. This could suggest that both BERT$^{NER}_{SC}$ and Elsevier's NER model also performs worse for emerging entities compared to other instances.
+
+In conclusion, it can be seen that it is possible to utilize the latest neural approaches for performing Entity Linking in funding domain. The developed approach that uses BERT$^{NER}_{SC}$ for NER, Biencoder$_{ADPT}$ for candidate selection and Reranker$_{12}$ for candidate reranking obtained F1 scores of 75.35, 52.14 and 84.8 in ``Normal'', ``EE'' and ``InKB'' settings respectively, outperforming the current EL system of Elsevier by 6.9, 8.9 and 7.5 points in terms of F1 score for the corresponding settings.
+
+\section{Future Work}
+
+Both the results of evaluation and the last manual investigation done on the predictions of the developed models revealed important points for improvement. First of all, it was noticed that detecting emerging entities was the weakness of the models. NIL mention detection is an important part of EL, and it is especially important for the task at hand, as they are observed frequently and are later used to enhance the KR. We believe that a separate system or component to detect NIL mentions would increase the overall performance.
+
+Another weakness of the approach was observed with the NER component. Sometimes, stop words and other tokens that occur frequently in Organization mentions were extracted as singleton mentions due to having a high probability for an ``I-ORG'' tag. Moreover, it was seen that the model could perform poorly when mentions of two different organizations occur side by side. It is believed that utilizing a CRF layer on BERT$^{NER}_{SC}$ could help with these issues tremendously, especially the former. Furthermore, adding dictionary features extracted from the KR could also help with detecting better mention boundaries as it could push the model to assign higher probability to the patterns observed in KR. For this purpose, the features defined by \cite{MedDict} could be used. However, it should be noted that these kind of features could deteriorate the performance of detecting mentions of emerging entities. Performing end-to-end EL could also improve the performance in terms of mention boundary errors. For this purpose, Biencoder$_{ADPT}$ could be extended for mention detection following the ELQ model. However, the efficiency could decrease as ELQ requires assigning probabilities to each possible mention span. However, we believe that performing end-to-end EL could increase the performance in general, as it did for ELQ.
+
+If Biencoder$_{ADPT}$ is improved in the future, Reranker$_{12}$ could be removed as it fixes obvious cases. To improve Biencoder$_{ADPT}$, an experiment could be to train it with more labeled data. Automatic labeled data generation techniques for EL could be investigated for this purpose. Trying different representations for candidate entities could also be a good experiment.
+
+There were also some inconsistencies observed in the dataset used. The performance can be improved for all models if these inconsistencies are resolved. For example, it should be decided if the country of an organization should be extracted with the rest of the mention or not. Or, whether funding programs are going to be extracted or not. Furthermore, separating funding programs and organizations in the KR would add value to the performance and to the dataset at hand.
+
+Lastly, completing the training of BERT$_{SC}$ is also left for future work. We hope that the version that is trained for longer could improve the performance of the tasks further, and also could be used for other funding related tasks in the future.
 
 \bibliographystyle{plain}
 \bibliography{references.bib}
