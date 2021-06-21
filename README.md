@@ -86,4 +86,5 @@ Python==3.7.9
 # References
 
 [1] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova. BERT: Pre-training of deep bidirectional transformers for language understanding. In Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational  Linguistics:  Human  Language  Technologies,  Volume  1  (Long  and Short  Papers), pages 4171–4186, Minneapolis, Minnesota, June 2019. Association for Computational Linguistics.
+
 [2] Suchin Gururangan,  Ana Marasovic,  Swabha Swayamdipta,  Kyle Lo,  Iz Beltagy, Doug Downey, and Noah A. Smith. Don't stop pretraining: Adapt language models to domains and tasks. In Proceedings of ACL, 2020.
