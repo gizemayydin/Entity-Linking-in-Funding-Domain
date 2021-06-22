@@ -172,7 +172,7 @@ The contributions of this thesis can be summarized as:
     \item Showing the effectiveness of a minimal linear reranker that can work with the proposed candidate selector.
 \end{enumerate}
 
-We believe that this research will be influential for other domains to make use of the state-of-the-art neural architectures for EL and will provide important insights on possible strengths and weaknesses of utilizing such systems. Moreover, the developed neural components could be used as a part of a single end-to-end funding information extraction model in the future.
+We believe that this research will be influential for other domains to make use of the state-of-the-art neural architectures for EL and will provide important insights on possible strengths and weaknesses of utilizing such systems. Moreover, the developed neural components could be used as a part of a single end-to-end funding information extraction model in the future. The code for the developed models can be found on GitHub\footnote{\url{https://github.com/gizemayydin/Entity-Linking-in-Funding-Domain}}.
 
 \section{Outline}
 The aim of Chapter \ref{chap:rw} is to review the recent literature on NER, ED and EL, as well as various domain-specific solutions to these problems. Literature on entity embeddings and domain adaptation of neural language models are also touched upon due to their relevance in proposed solutions. Lastly, notable previous work on funding information extraction is presented. In Chapter \ref{chapter:Approach}, the task of EL in funding domain is formally defined, the approach to tackle this task is presented and the models used are explained in detail. The dataset used, experimentation, results and discussion is included in Chapter \ref{sec:Evaluation}. Chapter \ref{chapter:Conclusion} concludes this thesis by summarizing the findings and providing a course of direction for future research.
@@ -1328,7 +1328,7 @@ For comparison, Table \ref{tab:lmvsgbm} shows the performance comparison of BI$_
     System   & With GPU & Without GPU  \\
     \hline
     BI$_{AD}$ + LM & $9.57 \pm 0.31$ &$25.38 \pm 1.51$\\
-    BI$_{AD}$ + Reranker$_{GBM}$ & $9.26 \pm 0.47$ &$23.07 \pm 0.78$\\
+    BI$_{AD}$ + GBM$_{F5}$ & $9.26 \pm 0.47$ &$23.07 \pm 0.78$\\
     \end{tabular}
     \caption{Mean and standard deviation runtime (in seconds) for 100 sentences and 306 ORG mentions, measured with and without GPU.}
     \label{tab:lmvsgbm2}
