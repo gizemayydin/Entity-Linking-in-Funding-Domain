@@ -6,6 +6,7 @@
 \usepackage[a4paper, left=1.5in, right=1.5in, top=1.5in, bottom=1.5in]{geometry}
                                 % for page size and margin settings
 \usepackage{graphicx}           % for ?
+
 \usepackage{amsmath,amssymb}    % for better equations
 \usepackage{amsthm}             % for better theorem styles
 \usepackage[ruled,noend]{algorithm2e}
@@ -76,6 +77,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{document}
+\definecolor{ao}{rgb}{0.0, 0.5, 0.0}
 \begin{titlepage}
 	\thispagestyle{empty}
 	\newcommand{\HRule}{\rule{\linewidth}{0.5mm}}
@@ -789,17 +791,17 @@ mode = ``Normal''\;
 The definitions provided by Hoffart et al. \cite{NILMentions} are used to calculate Precision, Recall and F1 scores for ``InKB'' and ``EE'' settings. However, micro averaged scores are reported instead of macro. Furthermore, following Hoffart et al. \cite{NILMentions}, micro and macro averaged accuracy is also reported. These two scores will be referred to as the ``Normal'' setting, as they take all predictions and ground truth annotations into account. Equations (4.4-10) define the evaluation metrics.
 \begin{fleqn}
 \begin{equation}
-    \text{Accuracy} = \frac{\text{\# Correct Disambiguation}}{\text{\# All Mentions}}
+    \text{Accuracy} = \frac{\text{\# Prediction = Ground Truth}}{\text{\# All Instances}}
 \end{equation}
 \end{fleqn}
 \begin{fleqn}
 \begin{equation}
-    \text{``InKB'' Precision} = \frac{\text{\# (Correct Disambiguation)} \land \text{(Entity not NIL)}}{\text{\# Predictions with non-NIL Entity}}
+    \text{``InKB'' Precision} = \frac{\text{\# (Prediction = Ground Truth)} \land \text{(Entity in KB)}}{\text{\# Predictions where link is to an entity in KB}}
 \end{equation}
 \end{fleqn}
 \begin{fleqn}
 \begin{equation}
-    \text{``InKB'' Recall} = \frac{\text{\# (Correct Disambiguation)} \land \text{(Entity not NIL)}}{\text{\# Ground truth ann. with non-NIL Entity}}
+    \text{``InKB'' Recall} = \frac{\text{\# (Prediction = Ground Truth)} \land \text{(Entity in KB)}}{\text{\# Ground truth ann. where link is to an entity in KB}}
 \end{equation}
 \end{fleqn}
 \begin{fleqn}
@@ -810,13 +812,13 @@ The definitions provided by Hoffart et al. \cite{NILMentions} are used to calcul
 
 \begin{fleqn}
 \begin{equation}
-    \text{``EE'' Precision} = \frac{\text{\# (Correct Disambiguation)} \land \text{(Entity is NIL)}}{\text{\# Predictions with NIL Entity}}
+    \text{``EE'' Precision} = \frac{\text{\# (Prediction = Ground Truth)} \land \text{(Link is NIL)}}{\text{\# Predictions where link is to NIL}}
 \end{equation}
 \end{fleqn}
 
 \begin{fleqn}
 \begin{equation}
-    \text{``EE'' Recall} = \frac{\text{\# (Correct Disambiguation)} \land \text{(Entity is NIL)}}{\text{\# Ground truth ann. with NIL Entity}}
+    \text{``EE'' Recall} = \frac{\text{\# (Prediction = Ground Truth)} \land \text{(Link is NIL)}}{\text{\# Ground truth ann. where link is to NIL}}
 \end{equation}
 \end{fleqn}
 
@@ -825,6 +827,8 @@ The definitions provided by Hoffart et al. \cite{NILMentions} are used to calcul
     \text{``EE'' F1} = \frac{2 \cdot \text{(``EE'' Precision)} \cdot \text{(``EE'' Recall)}}{\text{(``EE'' Precision)} + \text{(``EE'' Recall)}}
 \end{equation}
 \end{fleqn}
+
+Accuracy measures the fraction of instances (mentions) for which the predicted link (an entity from the KB or NIL) is the same with that of ground truth annotation. ``InKB'' precision measures the fraction of correct links, among the predicted links that point to an entity in the KB. Contrary, ``EE'' precision measures the fraction of correct links, among the predicted links that point to NIL. ``InKB'' recall measures the fraction of ground truth annotations captured by the model where the mentions are linked to an entity in the KB. ``EE'' recall measures the fraction of ground truth annotations captured by the model where the mentions are linked to NIL.
 
 
 \subsection{Training, Hyperparameters and Implementation}
@@ -1110,9 +1114,9 @@ The results for NER, ED and EL are presented in this section. Different approach
  \\[0.7ex]
     BERT$^{NER}$ & 79.18&\textbf{86.03}&\textbf{82.46}&94.71&\textbf{97.39}&96.03
 \\[0.7ex]
-    BERT$^{NER}_{SC}$ & \textbf{80.28}&\textbf{86.54}&\textbf{83.29}&\textbf{94.9}	&\textbf{97.63}&\textbf{96.24}
+    BERT$^{NER}_{SC}$ & \textbf{80.28}&\textcolor{ao}{\textbf{86.54}}&\textcolor{ao}{\textbf{83.29}}&\textbf{94.9}	&\textcolor{ao}{\textbf{97.63}}&\textbf{96.24}
   \\[0.7ex]
-    Flair$^{NER}$& \textbf{85.83}&78.02&81.74&\textbf{97.56}&95.24&\textbf{96.39}
+    Flair$^{NER}$& \textcolor{ao}{\textbf{85.83}}&78.02&81.74&\textcolor{ao}{\textbf{97.56}}&95.24&\textcolor{ao}{\textbf{96.39}}
  \\[0.7ex]
     \end{tabular}
     \caption{NER Results on Validation split}
@@ -1133,7 +1137,7 @@ BERT$^{NER}_{SC}$ improves upon BERT$^{NER}$ further, showing the importance of 
     \hline
     BERT$^{NER}$ (2 epochs) &  78.44&85.8&81.96&94.59&97.43&95.99
  \\[0.7ex]
-    BERT$^{NER}_{SC}$ (2 epochs) &  \textbf{79.54}&\textbf{86.56}&\textbf{82.9}&\textbf{94.73}&\textbf{97.55}&\textbf{96.12}
+    BERT$^{NER}_{SC}$ (2 epochs) &  \textcolor{ao}{\textbf{79.54}}&\textcolor{ao}{\textbf{86.56}}&\textcolor{ao}{\textbf{82.9}}&\textcolor{ao}{\textbf{94.73}}&\textcolor{ao}{\textbf{97.55}}&\textcolor{ao}{\textbf{96.12}}
   \\[0.7ex]
     \end{tabular}
     \caption{Comparison of BERT$^{NER}$ and BERT$^{NER}_{SC}$ with the second-best hyperparameter setting, i.e. 2 epochs with a learning rate scheduler.}
@@ -1148,7 +1152,7 @@ BERT$^{NER}_{SC}$ improves upon BERT$^{NER}$ further, showing the importance of 
     \hline
     Stanford NER &  76.17 & 72.87  & 74.48 & 93.37   & 93.24  & 93.31
  \\[0.7ex]
-    BERT$^{NER}_{SC}$ &  \textbf{79.08} & \textbf{85.31} & \textbf{82.08}& \textbf{93.95}&   \textbf{96.54}&   \textbf{95.23}
+    BERT$^{NER}_{SC}$ &  \textcolor{ao}{\textbf{79.08} }& \textcolor{ao}{\textbf{85.31} }& \textcolor{ao}{\textbf{82.08}}& \textcolor{ao}{\textbf{93.95}}&   \textcolor{ao}{\textbf{96.54}}&   \textcolor{ao}{\textbf{95.23}}
   \\[0.7ex]
     \end{tabular}
     \caption{NER Results on Test split}
@@ -1177,8 +1181,8 @@ We believe that these results are answering the sub-questions RQ2 and RQ3. For R
     \hline
     BI$_{AD}$   & 88.44&90.75\\
     BI$_{AD}$+LM& 90.48 &92.22\\
-    BI$_{AD}$+GBM$_{F5}$ &\textbf{91.15} &\textbf{92.76}\\
-    GBM$_{F26}$ & \textbf{91.02}&\textbf{92.84}\\
+    BI$_{AD}$+GBM$_{F5}$ &\textcolor{ao}{\textbf{91.15}} &\textbf{92.76}\\
+    GBM$_{F26}$ & \textbf{91.02}&\textcolor{ao}{\textbf{92.84}}\\
     Commonness  &83.8&85.81 \\
     \end{tabular}
     
@@ -1188,9 +1192,9 @@ We believe that these results are answering the sub-questions RQ2 and RQ3. For R
     \hline
     BI$_{AD}$  &  75.75& 76.27&	76.01\\
     BI$_{AD}$+LM & 75.68& 80.85& 78.18\\
-    BI$_{AD}$+GBM$_{F5}$ &\textbf{77.44}&\textbf{81.14} &\textbf{79.25}\\
-    Commonness  & 53.55& \textbf{88.2}&	66.64 \\
-    GBM$_{F26}$  & \textbf{79.11}& 78.67&	\textbf{78.89} \\
+    BI$_{AD}$+GBM$_{F5}$ &\textbf{77.44}&\textbf{81.14} &\textcolor{ao}{\textbf{79.25}}\\
+    Commonness  & 53.55& \textcolor{ao}{\textbf{88.2}}&	66.64 \\
+    GBM$_{F26}$  & \textcolor{ao}{\textbf{79.11}}& 78.67&	\textbf{78.89} \\
     \end{tabular}
     
     \vspace{0.5cm}\begin{tabular}{lccc}
@@ -1199,9 +1203,9 @@ We believe that these results are answering the sub-questions RQ2 and RQ3. For R
     \hline
     BI$_{AD}$   & 90.8&90.68&	90.74\\
     BI$_{AD}$+LM  & 93.43& 92.26& 92.84\\
-    BI$_{AD}$+GBM$_{F5}$ &\textbf{93.82} &\textbf{92.99} &\textbf{93.4}\\
-    Commonness  & \textbf{94.22}&82.99	&88.25 \\
-     GBM$_{F26}$   & 93.2&\textbf{93.29}&	\textbf{93.25}\\
+    BI$_{AD}$+GBM$_{F5}$ &\textbf{93.82} &\textbf{92.99} &\textcolor{ao}{\textbf{93.4}}\\
+    Commonness  & \textcolor{ao}{\textbf{94.22}}&82.99	&88.25 \\
+     GBM$_{F26}$   & 93.2&\textcolor{ao}{\textbf{93.29}}&	\textbf{93.25}\\
     \end{tabular}
        
     \caption{Performance comparison of different ED models on the Validation split. Micro averaged results are reported for ``InKB'' and ``EE''.}
@@ -1215,7 +1219,7 @@ We believe that these results are answering the sub-questions RQ2 and RQ3. For R
     System    & Accuracy &Accuracy \\
     \hline
     %BI$_{AD}$+LM   & 89.89 & 90.37\\
-    BI$_{AD}$+GBM$_{F5}$   &\textbf{90.66} & \textbf{91.11}\\
+    BI$_{AD}$+GBM$_{F5}$   &\textcolor{ao}{\textbf{90.66}} & \textcolor{ao}{\textbf{91.11}}\\
     GBM$_{F26}$ & 90.26&	90.84\\
     \end{tabular}
     
@@ -1224,8 +1228,8 @@ We believe that these results are answering the sub-questions RQ2 and RQ3. For R
     System  & Precision & Recall & F1 Score \\
     \hline
      %BI$_{AD}$+LM   &  77.64 &\textbf{84.62}& \textbf{80.98}\\
-     BI$_{AD}$+GBM$_{F5}$   &79.26 &\textbf{85.45}&\textbf{82.24}\\
-    GBM$_{F26}$   & \textbf{80.03}&	81.49&	80.75\\
+     BI$_{AD}$+GBM$_{F5}$   &79.26 &\textcolor{ao}{\textbf{85.45}}&\textcolor{ao}{\textbf{82.24}}\\
+    GBM$_{F26}$   & \textcolor{ao}{\textbf{80.03}}&	81.49&	80.75\\
     \end{tabular}
     
     \vspace{0.5cm}\begin{tabular}{lccc}
@@ -1233,8 +1237,8 @@ We believe that these results are answering the sub-questions RQ2 and RQ3. For R
     System  & Precision & Recall & F1 Score \\
     \hline
      %BI$_{AD}$+LM    &  \textbf{93.05} &91.11 &92.07\\
-     BI$_{AD}$+GBM$_{F5}$   &\textbf{93.56}  &91.86 &\textbf{92.7}\\
-    GBM$_{F26}$   & 92.69&	\textbf{92.3}&	92.5\\
+     BI$_{AD}$+GBM$_{F5}$   &\textcolor{ao}{\textbf{93.56}}  &91.86 &\textcolor{ao}{\textbf{92.7}}\\
+    GBM$_{F26}$   & 92.69&	\textcolor{ao}{\textbf{92.3}}&	92.5\\
     \end{tabular}
     		
 
@@ -1260,7 +1264,7 @@ Table \ref{tab:elresultstest} shows that the best model pairing improves upon th
     Stanford NER& GBM$_{F26}$ & 69.83	&67.09&	68.43&	71.62&	69.24&	69.34
 \\
     %BERT$_{SC}^{NER}$ & BI$_{AD}$ + LM &\textbf{72.45}&\textbf{78.5}&\textbf{75.35}&\textbf{75.78}&\textbf{78.37}&\textbf{76.24} \\
-    BERT$_{SC}^{NER}$ & BI$_{AD}$ + GBM$_{F5}$ & \textbf{72.89}&\textbf{78.97}&\textbf{75.81}&\textbf{76.12}&\textbf{78.73}&\textbf{76.59}\\
+    BERT$_{SC}^{NER}$ & BI$_{AD}$ + GBM$_{F5}$ & \textcolor{ao}{\textbf{72.89}}&\textcolor{ao}{\textbf{78.97}}&\textcolor{ao}{\textbf{75.81}}&\textcolor{ao}{\textbf{76.12}}&\textcolor{ao}{\textbf{78.73}}&\textcolor{ao}{\textbf{76.59}}\\
     \end{tabular}
     
     \vspace{0.5cm}\begin{tabular}{l l c c c| c c c}
@@ -1270,7 +1274,7 @@ Table \ref{tab:elresultstest} shows that the best model pairing improves upon th
     Stanford NER & GBM$_{F26}$ & 45.93&	41.02&	43.34&	71.77&	71.07	&71.01
 \\
     %BERT$_{SC}^{NER}$ & BI$_{AD}$ + LM &\textbf{49.85}&\textbf{54.65}&\textbf{52.14}&\textbf{73.14}&\textbf{73.63}&\textbf{72.98} \\
-    BERT$_{SC}^{NER}$ & BI$_{AD}$ + GBM$_{F5}$ &\textbf{50.71}&\textbf{55.}1&\textbf{52.82}&\textbf{73.85}&\textbf{74.29}&\textbf{73.68} \\
+    BERT$_{SC}^{NER}$ & BI$_{AD}$ + GBM$_{F5}$ &\textcolor{ao}{\textbf{50.71}}&\textcolor{ao}{\textbf{55.1}}&\textcolor{ao}{\textbf{52.82}}&\textcolor{ao}{\textbf{73.85}}&\textcolor{ao}{\textbf{74.29}}&\textcolor{ao}{\textbf{73.68}} \\
     \end{tabular}
     
     \vspace{0.5cm}\begin{tabular}{l l c c c| c c c}
@@ -1280,7 +1284,7 @@ Table \ref{tab:elresultstest} shows that the best model pairing improves upon th
     Stanford NER  & GBM$_{F26}$ & 83.15&	72.26&	77.33&	78.05&	73.69&	74.73
 \\
     %BERT$_{SC}^{NER}$ & BI$_{AD}$ + LM & \textbf{86.42}&\textbf{83.23}&\textbf{84.8}&\textbf{82.78}&\textbf{81.8}&\textbf{81.49} \\
-    BERT$_{SC}^{NER}$ & BI$_{AD}$ + GBM$_{F5}$ &\textbf{86.62}&\textbf{83.72}&\textbf{85.14}&\textbf{83.07}&\textbf{82.25}&\textbf{81.86} \\
+    BERT$_{SC}^{NER}$ & BI$_{AD}$ + GBM$_{F5}$ &\textcolor{ao}{\textbf{86.62}}&\textcolor{ao}{\textbf{83.72}}&\textcolor{ao}{\textbf{85.14}}&\textcolor{ao}{\textbf{83.07}}&\textcolor{ao}{\textbf{82.25}}&\textcolor{ao}{\textbf{81.86}} \\
     \end{tabular}
     \caption{Comparison of EL performance of the best NER and ED models and the feature-based models on the Test split.}
     \label{tab:elresultstest}
@@ -1299,7 +1303,7 @@ Table \ref{tab:elresultstest} shows that the best model pairing improves upon th
     %Stanford NER  & + Reranker$_{4}$ &67.54&69.19&68.35&76.42&74.02&74.17\\
     Stanford NER  & BI$_{AD}$ + LM &67.72&69.37&68.54&76.63&74.17&74.34\\
     BERT$_{SC}^{NER}$ & Commonness & 69.48&75.26&72.25&75.82&78.3&	76.38\\
-    BERT$_{SC}^{NER}$ & GBM$_{F26}$ & \textbf{74.19}&\textbf{80.36}&\textbf{77.15}&\textbf{80.17}&\textbf{82.88}&	\textbf{80.79}\\
+    BERT$_{SC}^{NER}$ & GBM$_{F26}$ & \textcolor{ao}{\textbf{74.19}}&\textcolor{ao}{\textbf{80.36}}&\textcolor{ao}{\textbf{77.15}}&\textcolor{ao}{\textbf{80.17}}&\textcolor{ao}{\textbf{82.88}}&\textcolor{ao}{	\textbf{80.79}}\\
     BERT$_{SC}^{NER}$ & BI$_{AD}$ &72.49&78.52&75.38&78.91&81.5&	79.5\\
     %BERT$_{SC}^{NER}$ & + Reranker$_{4}$ &73.68&79.8&76.62&79.75&82.39&80.36\\
     BERT$_{SC}^{NER}$ & BI$_{AD}$ + LM & \textbf{73.94}&	\textbf{80.09}&	\textbf{76.89}&	\textbf{79.99}&	\textbf{82.64}&	\textbf{80.6}\\
@@ -1315,8 +1319,8 @@ Table \ref{tab:elresultstest} shows that the best model pairing improves upon th
     %Stanford NER  & + Reranker$_{4}$ &47.06&44.26&45.62&67.92&.67.82&67.42\\
     Stanford NER & BI$_{AD}$ + LM&48.82&41.89&45.09&69.83&69.35&69.15\\
     BERT$_{SC}^{NER}$ & Commonness & 45.67&	58.5&51.3&	62.43&64.48&	62.84\\
-    BERT$_{SC}^{NER}$ & GBM$_{F26}$ &\textbf{56.07}&	\textbf{53.8}&\textbf{54.91}&	73.38&73.53&	72.97 \\
-    BERT$_{SC}^{NER}$ & BI$_{AD}$ &\textbf{56.6}&	49.78&52.97&	\textbf{74.39}&\textbf{74.26}&	\textbf{73.85}\\
+    BERT$_{SC}^{NER}$ & GBM$_{F26}$ &\textbf{56.07}&	\textcolor{ao}{\textbf{53.8}}&\textcolor{ao}{\textbf{54.91}}&	73.38&73.53&	72.97 \\
+    BERT$_{SC}^{NER}$ & BI$_{AD}$ &\textcolor{ao}{\textbf{56.6}}&	49.78&52.97&	\textcolor{ao}{\textbf{74.39}}&\textcolor{ao}{\textbf{74.26}}&	\textcolor{ao}{\textbf{73.85}}\\
     %BERT$_{SC}^{NER}$ & + Reranker$_{4}$ &53.32&56.17&54.71&71.65&72.54&71.57\\
     BERT$_{SC}^{NER}$ & BI$_{AD}$ + LM & 55.22&\textbf{53.41}&\textbf{54.3}&\textbf{73.48}&\textbf{73.84}&\textbf{73.16}\\
     \end{tabular}
@@ -1331,10 +1335,10 @@ Table \ref{tab:elresultstest} shows that the best model pairing improves upon th
     %Stanford NER  & + Reranker$_{4}$ &88.5&73.33&80.2&84.68&77.22&79.41\\
     Stanford NER &BI$_{AD}$ + LM &87.59&73.94&80.19&83.75&77.56&79.3\\ 
     BERT$_{SC}^{NER}$ & Commonness & 90.62	&78.04&	83.86	&87.69	&80.26&	82.5\\
-    BERT$_{SC}^{NER}$ & GBM$_{F26}$ & \textbf{89.31}	&\textbf{84.77}&	\textbf{86.98}	&\textbf{86.99}	&\textbf{86.06}&	\textbf{85.72}\\
+    BERT$_{SC}^{NER}$ & GBM$_{F26}$ & \textbf{89.31}	&\textcolor{ao}{\textbf{84.77}}&	\textcolor{ao}{\textbf{86.98}}	&\textcolor{ao}{\textbf{86.99}}	&\textcolor{ao}{\textbf{86.06}}&	\textcolor{ao}{\textbf{85.72}}\\
     BERT$_{SC}^{NER}$ & BI$_{AD}$ &88.24	&83.29&	85.7	&85.52	&84.79&	84.37\\
     %BERT$_{SC}^{NER}$ & + Reranker$_{4}$ &90.15&83.73&86.82&87.68&85.2&85.54\\
-    BERT$_{SC}^{NER}$ & BI$_{AD}$ + LM &\textbf{89.48}&\textbf{84.53}&\textbf{86.93}&\textbf{86.9}&\textbf{85.67}&\textbf{85.51}\\
+    BERT$_{SC}^{NER}$ & BI$_{AD}$ + LM &\textcolor{ao}{\textbf{89.48}}&\textbf{84.53}&\textbf{86.93}&\textbf{86.9}&\textbf{85.67}&\textbf{85.51}\\
     \end{tabular}
     \caption{EL performance of different NER-ED model pairs on the Validation split. }
     \label{tab:elresultsvalid}
