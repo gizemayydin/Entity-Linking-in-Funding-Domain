@@ -37,7 +37,7 @@ Candidate Reranking model needs to be trained after the candidate selector.
 1. Run the notebook `ED for Funding Organizations/Prediction with Biencoder.ipynb` twice. Once for training set, and a second time for the dev set. This notebook retrieves the candidate entities for these datasets, which are later used for training.
 2. Run the notebook `ED for Funding Organizations/Train GBM Reranker.ipynb`
 ## Prediction
-Run the notebook `ED for Funding Organizations/Train GBM Reranker.ipynb`. This notebook can perform predictions on input mentions with the full model.
+Run the notebook `ED for Funding Organizations/Neural Entity Disambiguation Predictions.ipynb`. This notebook can perform predictions on input mentions with the full model.
 ## Evaluation
 The notebook `ED for Funding Organizations/Evalute ED Model.ipynb` contains the evaluation functions that are used for the thesis.
 
